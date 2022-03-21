@@ -1,0 +1,134 @@
+
+feature 2: add expenses with group
+
+Users Table = [me, friend1, friend2, friend3]
+id	name	email	pass	phone
+1	parth	dp@g.c	123	211212
+2	yash	ys@g.c	123	211212
+3	ved	vd@g.c	123	211212
+4	abhi	ab@g.c	123	211212
+
+
+current | user = parth(1)
+
+1. Create Group
+2. name of group and select more than one user to create group.
+lets say invites sent to yash, ved, and abhi
+
+Group Table
+id	name		status
+1	csgo		pending
+
+
+group-user linking table
+u_id	g_id
+1	1
+2	1
+3	1
+4	1
+
+
+Activity Table
+id	u_id	sender_u_id	g_id	message			status		time
+1	2	1		1	{type: invite,		PENDING		1000s
+				 	message: 'get in'}
+2	3	1		1	{type: invite,		PENDING		1000s
+				 	message: 'get in'}
+3	4	1		1	{type: invite,		PENDING		1000s
+				 	message: 'get in'}
+
+
+if user(2) declines then checks this -> 
+take all rows group-user innerjoin activity table on g_id where group_user_u_id == activity.u_id and g_id == 1
+
+id	u_id	sender_u_id	g_id	message			status		time
+1	2	1		1	{type: invite,		REJECT		1000s
+				 	message: 'get in'}
+2	3	1		1	{type: invite,		PENDING		1000s
+				 	message: 'get in'}
+3	4	1		1	{type: invite,		PENDING		1000s
+				 	message: 'get in'}
+
+if all have Reject Status then remove group from group table and remove all rows from group-linking table
+
+if all accepts invite then change status of group from pending to Active
+
+Group Table
+id	name		status
+1	csgo		ACTIVE
+
+
+group-user linking table
+u_id	g_id
+1	1
+2	1
+3	1
+4	1
+
+
+Activity Table
+id	u_id	sender_u_id	g_id	message			status		time
+1	2	1		1	{type: invite,		ACCEPT		1000s
+				 	message: 'get in'}
+2	3	1		1	{type: invite,		ACCEPT		1000s
+				 	message: 'get in'}
+3	4	1		1	{type: invite,		ACCEPT		1000s
+				 	message: 'get in'}
+------------------------------------------------------------------------------------------------------------
+
+Add Expense
+
+
+current | user = yash(2)
+
+
+1. Add expense
+2. fill details like bill_name, amount spent, split type, status, date, spender
+
+Bills Table
+id	name	date	        amount 		split_type	status
+1	food	12/02/2022      2000		Equal		PENDING
+
+
+
+Activity Table
+id	u_id	sender_u_id	g	message_type	bid		message			status		time
+1	2	1		1	invite		-		'get in'		ACCEPT		1000s
+2	3	1		1	invite		-		'get in'		ACCEPT		1000s
+3	4	1		1	invite		-		'get in'		ACCEPT		1000s
+4	1	2		1	expense		1		'accept expense'	PENDING		2100s	 	
+5	3	2		1	expense		1		'accept expense'	PENDING		2100s
+6	4	2		1	expense		1		'accept expense'	PENDING		2100s
+
+
+check every time when user 1, 3, 4 accepts or rejects that 
+take all rows with this bill_id(1) and check status of all.
+if all status is reject then delete row from bill table with id(1) and
+if all status is accepts then change status in bill table to Unsettled
+
+lets say all accepts 
+
+
+Bills Table
+id	name	spender_id	date	        amount 		split_type	status
+1	food	1		12/02/2022      2000		Equal		UNSETTLED
+
+
+settlements table 
+id 	b_id 	g_id 	u_id	payed	debts
+1	1	1	1	2000	0
+2	1	1	2	0	500
+3	1	1	3	0	500
+4	1	1	4	0	500
+
+
+
+
+
+
+
+
+
+
+
+

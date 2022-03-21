@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+
+{% block title %}title{% endblock title %}
+
+{% block css %}
+<script>
+
+</script>
+{% endblock css %}
+
+{% block body %}
+
+<div class="conatiner">
+    <div class="row">
+        <div class="col-md-4">
+            <main class="form-signin text-center">
+                <form action="" method='POST'>
+                    <h1 class="h3 mb-3 fw-normal">Please sign in</h1>
+
+                    <div class="form-floating">
+                        <input type="text" class="form-control" id="floatingInput1" placeholder="parth desai">
+                        <label for="floatingInput1">Username</label>
+                    </div>
+                    <div class="form-floating">
+                        <input type="email" class="form-control" id="floatingInput2" placeholder="name@example.com">
+                        <label for="floatingInput2">Email address</label>
+                    </div>
+                    <div class="form-floating">
+                        <input type="password" class="form-control" id="floatingPassword1" placeholder="Password">
+                        <label for="floatingPassword1">Password</label>
+                    </div>
+                    <div class="form-floating">
+                        <input type="password" class="form-control" id="floatingPassword2"
+                            placeholder="Confirm Password">
+                        <label for="floatingPassword2">Confirm Password</label>
+                    </div>
+                    <div class="form-floating">
+                        <input type="text" class="form-control" id="phone" placeholder="Phone">
+                        <label for="phone">Phone</label>
+                    </div>
+                    <button class="w-100 btn btn-lg btn-primary" type="submit">Sign in</button>
+                    <p class="mt-5 mb-3 text-muted">© 2017–2021</p>
+                </form>
+            </main>
+        </div>
+    </div>
+</div>
+
+
+{% endblock body %}
+
+{% block js %}{% endblock js %}

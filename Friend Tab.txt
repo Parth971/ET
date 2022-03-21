@@ -1,0 +1,307 @@
+/ -> home page(if not logged in)(options: login, sign up, about us)
+/dashboard -> dashboard (options: Recent activity, all expenses, groups, friends)(drop down: your account, create group, contact, logout)
+
+feature 1: add expenses with friend
+Users Table = [me, friend1, friend2, friend3]
+id	name	email	pass	phone
+1	parth	dp@g.c	123	211212
+2	yash	ys@g.c	123	211212
+3	ved	vd@g.c	123	211212
+4	abhi	ab@g.c	123	211212
+
+
+current | user = parth(1)
+
+1. add friend
+2. shows list of users
+3. select one of user e.g. yash
+4. sends notification to(yash(2)) accept for joining with me to track expense(me and friend)
+Activity Table
+id	u_id	sender_u_id	message			status		time
+1	2	1		{type: invite,		PENDING		1000s
+				 message: 'get in'}
+
+this will give results regarding:
+fetch sent requests(invites or bill verify) for parth(1) -> get all row which has sender_u_id == 1
+fetch new requests(invites or bill verify) for yash(2) -> get all row which has u_id == 2
+
+current | user = yash(2)
+
+1. open activity
+
+---------------------------------------------------------------------------
+2.(No) Rejects invite from parth(1)
+
+Activity Table
+id	u_id	sender_u_id	message			status		time
+1	2	1		{type: invite,		REJECT		2000s
+				 message: 'get in'}
+---------------------------------------------------------------------------
+2.(Yes) accepts invite from parth(1)
+
+Activity Table
+id	u_id	sender_u_id	message			status		time
+1	2	1		{type: invite,		ACCEPT		2000s
+				 message: 'get in'}
+
+Group Table
+id	name	
+1	__F__1__2__
+
+---------------------------------------------------------------------------
+
+
+Add Expense
+
+current | user = parth(1)
+
+1. Add expense
+2. fill details like bill_name, amount spent, split type, status, date, spender
+
+Activity Table
+id	u_id	sender_u_id	message			status		time
+1	2	1		{type: invite,		ACCEPT		2000s
+				 message: 'get in'}
+2	2	1		{type: expense,		PENDING		2100s
+				 message: {
+					bill_name: 'food',
+					spender_id: 1,
+					date: '12/02/2022',
+					amount: 2000,
+					split_type: 'Equal',
+					status: 'Unsettled'}}
+
+
+this will give results regarding:
+fetch sent requests(invites or bill verify) for parth(1) -> get all row which has sender_u_id == 1
+fetch new requests(invites or bill verify) for yash(2) -> get all row which has u_id == 2
+
+current | user = yash(2)
+
+1. open activity
+
+---------------------------------------------------------------------------
+2.(No) Rejects Expense from parth(1)
+
+Activity Table
+id	u_id	sender_u_id	message			status		time
+1	2	1		{type: invite,		ACCEPT		2000s
+				 message: 'get in'}
+2	2	1		{type: expense,		REJECT		2200s
+				 message: {
+					bill_name: 'food',
+					spender_id: 1,
+					date: '12/02/2022',
+					amount: 2000,
+					split_type: 'Equal',
+					status: 'Unsettled'}}
+---------------------------------------------------------------------------
+2.(Yes) accepts invite from parth(1)
+
+Activity Table
+id	u_id	sender_u_id	message			status		time
+1	2	1		{type: invite,		ACCEPT		2000s
+				 message: 'get in'}
+2	2	1		{type: expense,		ACCEPT		2200s
+				 message: {
+					bill_name: 'food',
+					spender_id: 1,
+					date: '12/02/2022',
+					amount: 2000,
+					split_type: 'Equal',
+					status: 'Unsettled'}}
+
+Bills Table
+id	name	spender_id	date	        amount 		split_type	status
+1	food	1		12/02/2022      2000		Equal		Unsettled
+
+Users Bill
+u_id	b_id	amount_paid	group_id
+1	1	2000		1
+2	1	0		1
+
+Note: if bill request says its settled bill, then in Users Bill both will have amount which they payed
+---------------------------------------------------------------------------
+
+showing expenses in each user
+
+
+----------------------------------------------------------------------------------------------------------
+current | user = parth(1)
+
+1. In Friends tab, groups which is starting with __F__ and having __1__ in name of groups table.
+
+Group Table
+id	name	
+1	__F__1__2__
+
+so we have on row which is starting from __F__ and containing __1__, take its [id(1)] and show name of __2__ as in friends tab.
+
+when that group(friend) is selected. we want to show all expenses.
+
+now showing expenses related to that group(1)
+
+Users Bill
+u_id	b_id	amount_paid	group_id
+1	1	2000		1
+2	1	0		1
+
+Bills Table
+id	name	spender_id	date	        amount 		split_type	status
+1	food	1		12/02/2022      2000		Equal		Unsettled
+
+querying for innerjoin(Users Bill and Bills) on b_id. get all rows where u_id == 1 group_id == 1
+we have 
+u_id 	b_id 	amount_paid 	group_id	name	spender_id 	date		amount	split_type	status
+1	1	2000		1		food	1		12/02/2022	2000	Equal		Unsettled
+
+this tables shows all expenses related to group(1)
+
+now thats we can see all expenses related to this group(1), we can see details related to specific expense. Click on one of the expense.
+
+then pass some details to function (current_user_id, amount, split_type, status, spender_id) 
+-> return if status is settled then shows equal amount spended by each user of total amount
+-> return if status is unsettled then checks if sender_id is current_user_id
+			-> if yes
+				shows that other user have to pay amount/2 to you (green)
+			-> if no
+				shows you have to pay other user amount/2 (red)
+
+
+----------------------------------------------------------------------------------------------------------
+current | user = yash(2)
+
+1. In Friends tab, groups which is starting with __F__ and having __2__ in name of groups table.
+
+Group Table
+id	name	
+1	__F__1__2__
+
+so we have on row which is starting from __F__ and containing __2__, take its [id(1)] and show name of __1__ as in friends tab.
+
+when that group(friend) is selected. we want to show all expenses.
+
+now showing expenses related to that group(1)
+
+Users Bill
+u_id	b_id	amount_paid	group_id
+1	1	2000		1
+2	1	0		1
+
+Bills Table
+id	name	spender_id	date	        amount 		split_type	status
+1	food	1		12/02/2022      2000		Equal		Unsettled
+
+querying for innerjoin(Users Bill and Bills) on b_id. get all rows where u_id == 2 group_id == 1
+we have 
+u_id 	b_id 	amount_paid 	group_id	name	spender_id 	date		amount	split_type	status
+2	1	2000		1		food	1		12/02/2022	2000	Equal		Unsettled
+
+this tables shows all expenses related to group(1)
+
+now thats we can see all expenses related to this group(1), we can see details related to specific expense. Click on one of the expense.
+
+then pass some details to function (current_user_id, amount, split_type, status, spender_id) 
+-> return if status is settled then shows equal amount spended by each user of total amount
+-> return if status is unsettled then checks if sender_id is current_user_id
+			-> if yes
+				shows that other user have to pay amount/2 to you (green)
+			-> if no
+				shows you have to pay other user amount/2 (red)
+
+---------------------------------------------------------------------------------------------------------------------
+
+
+If person who will recieve money wants to send notification regarding money to friend then go to that expense
+
+current | user = parth(1)
+
+Activity Table
+id	u_id	sender_u_id	message				status		time
+1	2	1		{type: invite,			ACCEPT		2000s
+				 message: 'get in'}
+2	2	1		{type: expense,			ACCEPT		2200s
+				 message: {
+					bill_name: 'food',
+					spender_id: 1,
+					date: '12/02/2022',
+					amount: 2000,
+					split_type: 'Equal',
+					status: 'Unsettled'}}
+2	2	1		{type: reminder,
+				message: {
+					group_id: 1,
+					bill_id: 1}}		Sent		3600s
+
+
+current | user = yash(2)
+
+sees in activity tab that reminder is present from parth(1) about bill_id(1) from group_id(1).
+
+
+---------------------------------------------------------------------------------------------------------------------
+
+If person who wants to settle things. got to that expense and settle
+
+Users Bill
+u_id	b_id	amount_paid	group_id
+1	1	2000		1
+2	1	0		1
+
+Bills Table
+id	name	spender_id	date	        amount 		split_type	status
+1	food	1		12/02/2022      2000		Equal		Unsettled
+
+querying for innerjoin(Users Bill and Bills) on b_id. get all rows where u_id == 2 group_id == 1 and bill_id == 1
+we have 
+u_id 	b_id 	amount_paid 	group_id	name	spender_id 	date		amount	split_type	status
+2	1	0		1		food	1		12/02/2022	2000	Equal		Unsettled
+
+this tables shows single expense related to group(1) for b_id(1) and u_id(2).
+
+then pass some details to function (current_user_id, amount, split_type, status, spender_id) 
+-> Show no option if status is settled then shows equal amount spended by each user of total amount
+-> show settle option and return amount to be settled 
+then 
+-> payment page
+-> on success payment, redirect to main page and changes in tables as follow:
+
+get row with u_id == 2 and b_id == 1 and set amount_paid to amount that is paid.
+
+Users Bill
+u_id	b_id	amount_paid	group_id
+2	1	1000		1
+
+if amount that is paid is same as amount that must be paid then and then only
+get row with this bill id and set status to settled.
+
+Bills Table
+id	name	spender_id	date	        amount 		split_type	status
+1	food	1		12/02/2022      2000		Equal		settled
+
+
+after whatever amount is settled, send notification.
+Activity Table
+id	u_id	sender_u_id	message				status		time
+1	2	1		{type: invite,			ACCEPT		2000s
+				 message: 'get in'}
+2	2	1		{type: expense,			ACCEPT		2200s
+				 message: {
+					bill_name: 'food',
+					spender_id: 1,
+					date: '12/02/2022',
+					amount: 2000,
+					split_type: 'Equal',
+					status: 'Unsettled'}}
+3	2	1		{type: reminder,
+				message: {
+					group_id: 1,
+					bill_id: 1}}		Sent		3600s
+4	1	2		{type: settlement,
+				message: {			Sent		4000s
+					bill_id: 1,
+					amount_paid: 1000,
+					status: settled}}
+
+
+
