@@ -1,15 +1,30 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends 'base.html' %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashborad</title>
-</head>
 
-<body>
-    Dashborad
-</body>
+{% block title %}DashBoard{% endblock title %}
 
-</html>
+{% block css %}
+<script>
+
+</script>
+{% endblock css %}
+
+{% block body %}
+
+{% if request.user.is_authenticated %}
+    loged in as {{ request.user }}. You can <a href="{% url 'logout_handler' %}">Logout</a>
+{% endif %}
+
+<!-- get all friends group -->
+<!-- get all groups -->
+
+<!-- add friend -->
+<br>
+<a href="{% url 'add_friend' %}">Add friend</a>
+<!-- add group -->
+<br>
+<a href="{% url 'add_group' %}">Add Group</a>
+
+{% endblock body %}
+
+{% block js %}{% endblock js %}

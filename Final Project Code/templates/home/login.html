@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+
+{% block title %}Login{% endblock title %}
+
+{% load static %}
+{% block css %}
+<link rel="stylesheet" href="{% static 'home/css/custom.css' %}" type="text/css" />
+{% endblock css %}
+
+{% block body %}
+
+<div class="conatiner">
+    <div class="row">
+        <div class="col-md-4">
+            <main class="form-signin text-center">
+                <form action="{% url 'login_handler' %}" method='POST'>
+                    {% csrf_token %}
+                    <h1 class="h3 mb-3 fw-normal">Please log in</h1>
+                    <div class="form-floating">
+                        <input type="text" class="form-control" id="floatingInput1" placeholder="parth desai" name="username">
+                        <label for="floatingInput1">Username</label>
+                    </div>
+                    <div class="form-floating">
+                        <input type="password" class="form-control" id="floatingPassword1" placeholder="Password" name="password">
+                        <label for="floatingPassword1">Password</label>
+                    </div>
+
+                    {% if invalid_credentials %}
+                        <p class="validation_error">Invalid Credentials</p>
+                    {% endif %}
+
+                    <button class="w-100 btn btn-lg btn-primary" type="submit">Log in</button>
+                    <p class="mt-5 mb-3 text-muted">
+                        <a href="/">
+                            Don't have account? Sign up
+                        </a>
+                    </p>
+                </form>
+            </main>
+        </div>
+    </div>
+</div>
+
+
+{% endblock body %}
+
+{% block js %}{% endblock js %}
