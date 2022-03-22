@@ -1,13 +1,15 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 
-from home.models import CustomUser
+from home.models import CustomUser, Activity, Group, Group_Membership
 from django.contrib.auth import logout
 from django.contrib.auth import authenticate, login
 
 from django.db.utils import IntegrityError
 import sqlite3
 import re
+import json
+import datetime
 
 # helper funtions
 def check(email):
@@ -152,6 +154,41 @@ def dashboard(request):
     return render(request, 'home/dashboard.html')
 
 def add_friend(request):
+    if request.method == 'POST':
+        
+        user_id = request.POST.get('friend_id')
+
+        friend_user = CustomUser.objects.get(id=user_id)
+        current_user = request.user
+
+        try:
+            group = Group(group_name='Friends', status='PENDING', date=datetime.datetime.now() )
+            group.save()
+
+            gm1 = Group_Membership(user_id=current_user, group_id=group)
+            gm2 = Group_Membership(user_id=friend_user, group_id=group)
+
+            gm1.save()
+            gm2.save()
+
+            activity = Activity(user_id=friend_user, sender_id=current_user, group_id=group, message_type='INVITE',  message='lets join in!!!', status='PENDING', date=datetime.datetime.now() )
+
+            activity.save()
+
+            data = {
+                'message' : 'Sent invite'
+            }
+            json_data = json.dumps(data)
+            return HttpResponse(json_data, content_type="application/json")
+        except IntegrityError as e:
+            data = {
+                'message' : 'Sent invite Failed'+str(e)
+            }
+            json_data = json.dumps(data)
+            return HttpResponse(json_data, content_type="application/json")
+        
+
+
     users_qs = CustomUser.objects.all().exclude(username='admin')
 
     users = {}
@@ -161,6 +198,9 @@ def add_friend(request):
 
     context = {'users': users}
     return render(request, 'home/add_friend.html', context)
+
+
+
 
 def add_group(request):
     return HttpResponse('add_group')

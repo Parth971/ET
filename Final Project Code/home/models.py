@@ -36,7 +36,7 @@ class Activity(models.Model):
     user_id = models.ForeignKey(CustomUser, related_name='CurrentUser', on_delete=models.CASCADE)
     sender_id = models.ForeignKey(CustomUser, related_name='SenderUser', on_delete=models.CASCADE)
     group_id = models.ForeignKey(Group, on_delete=models.CASCADE)
-    bill_id = models.ForeignKey(Bill, on_delete=models.CASCADE)
+    bill_id = models.ForeignKey(Bill, on_delete=models.CASCADE, blank=True, null=True)
     message_type = models.CharField(max_length=20, default='-')
     message = models.CharField(max_length=100, default='-')
     status = models.CharField(max_length=20, default='PENDING')
