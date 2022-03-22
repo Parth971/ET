@@ -1,7 +1,10 @@
+from calendar import FRIDAY
+from email import message
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 
-from home.models import CustomUser, Activity, Group, Group_Membership
+from home.models import CustomUser, Activity, Group, Group_Membership, Friend
+from django.db.models import Q
 from django.contrib.auth import logout
 from django.contrib.auth import authenticate, login
 
@@ -52,6 +55,103 @@ def password_check(passwd):
 def is_phone_valid(s):
     Pattern = re.compile("(0|91)?[7-9][0-9]{9}")
     return Pattern.match(s)
+
+
+# return json_data 
+def invite_friend(request):
+    user_id = request.POST.get('friend_id')
+
+    friend_user = CustomUser.objects.get(id=user_id)
+    current_user = request.user
+
+    try:
+        group = Group(group_name='Friends', status='PENDING', date=datetime.datetime.now() )
+        group.save()
+
+        friend_row = Friend(friend1=current_user, friend2=friend_user, group_id=group, status='PENDING')
+        friend_row.save()
+
+        gm1 = Group_Membership(user_id=current_user, group_id=group)
+        gm2 = Group_Membership(user_id=friend_user, group_id=group)
+
+        gm1.save()
+        gm2.save()
+
+        activity = Activity(user_id=friend_user, sender_id=current_user, group_id=group, message_type='INVITE',  message='lets join in!!!', status='PENDING', date=datetime.datetime.now() )
+
+        activity.save()
+
+        data = {
+            'message' : 'Sent invite'
+        }
+        json_data = json.dumps(data)
+        
+    except IntegrityError as e:
+        data = {
+            'message' : 'Sent invite Failed'+str(e)
+        }
+        json_data = json.dumps(data)
+        
+    return json_data
+
+
+def accept_reject_friend_request(request):
+    activity_id = request.POST.get('activity_id')
+    state = request.POST.get('state')
+
+    print(activity_id)
+    print(state)
+    if state == 'Accept':
+        try:
+            current_activity = Activity.objects.get(id=activity_id)
+            current_activity.status = 'ACCEPTED'
+            
+            g_id = current_activity.group_id.id
+            
+            current_group = Group.objects.get(id=g_id)
+            current_group.status = 'ACTIVE'
+
+            f1 = current_activity.user_id # this is receiver or current user
+            f2 = current_activity.sender_id # this is sender user 
+                # cur - parth 
+                # user - part - f1
+                # sender - yash - f2
+            friend = Friend.objects.get(friend1=f2, friend2=f1) # first is sender and second is receiver
+            friend.status = 'ACTIVE'
+            friend.save()
+
+            current_activity.save()
+            current_group.save()
+        except IntegrityError as e:
+            data = {
+                'message' : 'Sent invite Failed'+str(e)
+            }
+            json_data = json.dumps(data)
+    else:
+        try:
+            current_activity = Activity.objects.get(id=activity_id)
+            # current_activity.status = 'REJECTED'
+            # print(current_activity)
+            g_id = current_activity.group_id.id
+            # print(g_id)
+            current_group = Group.objects.get(id=g_id)
+            # print(current_group)
+            current_group.delete()
+
+        except IntegrityError as e:
+            data = {
+                'message' : 'Sent invite Failed'+str(e)
+            }
+            json_data = json.dumps(data)
+            return json_data
+
+    data = {
+        'message' : state + 'ed Done.'
+    }
+    json_data = json.dumps(data)
+
+    return json_data
+
 
 
 # Create your views here.
@@ -154,57 +254,67 @@ def dashboard(request):
     return render(request, 'home/dashboard.html')
 
 def add_friend(request):
-    if request.method == 'POST':
-        
-        user_id = request.POST.get('friend_id')
+    
+    if request.method == 'POST' and 'friend_id' in request.POST:
+        # to invite friend
+        json_data = invite_friend(request)
+        return HttpResponse(json_data, content_type="application/json")
 
-        friend_user = CustomUser.objects.get(id=user_id)
-        current_user = request.user
-
-        try:
-            group = Group(group_name='Friends', status='PENDING', date=datetime.datetime.now() )
-            group.save()
-
-            gm1 = Group_Membership(user_id=current_user, group_id=group)
-            gm2 = Group_Membership(user_id=friend_user, group_id=group)
-
-            gm1.save()
-            gm2.save()
-
-            activity = Activity(user_id=friend_user, sender_id=current_user, group_id=group, message_type='INVITE',  message='lets join in!!!', status='PENDING', date=datetime.datetime.now() )
-
-            activity.save()
-
-            data = {
-                'message' : 'Sent invite'
-            }
-            json_data = json.dumps(data)
-            return HttpResponse(json_data, content_type="application/json")
-        except IntegrityError as e:
-            data = {
-                'message' : 'Sent invite Failed'+str(e)
-            }
-            json_data = json.dumps(data)
-            return HttpResponse(json_data, content_type="application/json")
-        
+    if request.method == 'POST' and 'activity_id' in request.POST:
+        # to accept or reject friend request
+        json_data = accept_reject_friend_request(request)
+        return HttpResponse(json_data, content_type="application/json")
 
 
-    users_qs = CustomUser.objects.all().exclude(username='admin')
+    # taking all users which is not in friend with current user.
+    # this users list doesnt contain users to which friend request is sent
+    # also users from which friend request is received.
+    # in short users which dont have any friend relation with current user is taken in users dict.
+     
+    users_qs = CustomUser.objects.all()
+    frd = Friend.objects.filter(Q(friend1=request.user) | Q(friend2=request.user)).values_list('friend1', 'friend2')
+    lis = []
+    for i in frd:
+        lis.extend(i)
 
     users = {}
-    for i in users_qs:
-        users[i.id] = i.username
+    for user in users_qs:
+        if user.id not in lis and user != request.user:
+            users[user.id] = user.username
+
+    # taking all friend requests and invites
+    # for requests
+    friend_requests = Activity.objects.filter(user_id=request.user, message_type='INVITE', status='PENDING', bill_id=None)
+    # print(friend_requests)
+
+    # for invites
+    pending_invites = Activity.objects.filter(sender_id=request.user, message_type='INVITE', status='PENDING', bill_id=None)
+    
+    # current friends
+    all_friends = []
+
+    all_friends1 = Friend.objects.filter(friend1=request.user, status='ACTIVE')
+    for i in all_friends1:
+        all_friends.append(i.friend2)
+
+    all_friends2 = Friend.objects.filter(friend2=request.user, status='ACTIVE')
+    for i in all_friends2:
+        all_friends.append(i.friend1)
 
 
-    context = {'users': users}
+    context = {
+        'users': users,
+        'friend_requests': friend_requests,
+        'pending_invites': pending_invites,
+        'all_friends': all_friends
+        }
     return render(request, 'home/add_friend.html', context)
-
-
-
 
 def add_group(request):
     return HttpResponse('add_group')
 
 
+def add_expense(request):
+    pass
 
 
