@@ -110,19 +110,17 @@
 					</select>
 				</div>
 				<div class="mb-3">
-					<label for="expense_name" class="col-form-label">Expense Name</label>
-					<input type="text" class="form-control" id="expense_name" value='' name='expense_name'>
+					<input type="text" class="form-control" id="expense_name" value='' placeholder='Expense Name' name='expense_name'>
 				</div>
 
-
 				<div class="input-group mb-3">
-					<input type="text" class="form-control" aria-label="Username" value='{{ request.user.username }}' disabled>
+					<input type="text" class="form-control" aria-label="Username" value='{{ request.user.username }} paid' disabled>
 					<span class="input-group-text">$</span>
 					<input type="text" class="form-control" id='current_user_amount' aria-label="amount" value='0'>
 				</div>
 
 				<div class="input-group mb-3">
-					<input type="text" class="form-control" aria-label="Username" disabled>
+					<input type="text" class="form-control" id='other_user' value='Friend paid' aria-label="Username" disabled>
 					<span class="input-group-text">$</span>
 					<input type="text" class="form-control" id='other_user_amount' aria-label="amount" value='0'>
 				</div>
@@ -145,6 +143,24 @@
 						<option value="percentage">Percentage</option>
 					</select>
 				</div>
+				
+				<div class="input-group mb-3">
+					<input type="text" class="form-control" value='{{ request.user.username }} must pay' disabled>
+					<span class="input-group-text">$</span>
+					<input type="text" class="form-control" id='current_user_must_pay' value='0'>
+					<span class="input-group-text percentage-span" style='display:none;'>%</span>
+				</div>
+
+				<div class="input-group mb-3">
+					<input type="text" class="form-control" id='other_user2' value='Friend must pay' disabled>
+					<span class="input-group-text">$</span>
+					<input type="text" class="form-control" id='other_user_must_pay' value='0'>
+					<span class="input-group-text percentage-span" style='display:none;'>%</span>
+					<div class="invalid-feedback" id='total_amount_remaining'>
+						Total Amount not same.
+					  </div>
+				</div>
+				
 
 				<div class='input-group mb-3'>
 					<label class="form-control" for="datetime-local">Date-Time</label>
@@ -209,6 +225,7 @@
 				data: {
 					csrfmiddlewaretoken: "{{ csrf_token }}",
 					state:"inactive",
+					'request_motive': 'send_friend_request',
 					'friend_id': current_id},
 				type: 'post',
 				success: function(result){
@@ -233,6 +250,7 @@
 				data: {
 					csrfmiddlewaretoken: "{{ csrf_token }}",
 					state:"inactive",
+					'request_motive': 'accept_reject_friend_request',
 					'activity_id': current_id,
 					'state': state },
 				type: 'post',
@@ -268,10 +286,65 @@
 
 		$( "#other_user_amount" ).keyup(validate_amounts);
 
-		$('#friend_name option').click(function() {
-			console.log(this);
+		$('#friend_name').change(function(){
+			if ($('#friend_name option:selected').text() == 'Choose...') {
+				$('#other_user').val('Friend paid');
+				$('#other_user2').val('Friend must pay');
+			}
+			else {
+				$('#other_user').val($('#friend_name option:selected').text()+' paid');
+				$('#other_user2').val($('#friend_name option:selected').text()+' must pay');
+				
+			}
 		});
 
+		function must_pay_amounts(){
+			if( isPositiveInteger($('#current_user_must_pay').val()) ) {
+				$('#current_user_must_pay').css('border', '1px solid #ced4da');
+			}
+			else {
+				$('#current_user_must_pay').css('border', '1px solid red');
+				$('#current_user_must_pay').val(0);
+			}
+			if( isPositiveInteger($('#other_user_must_pay').val()) ) {
+				$('#other_user_must_pay').css('border', '1px solid #ced4da');
+			}
+			else {
+				$('#other_user_must_pay').css('border', '1px solid red');
+				$('#other_user_must_pay').val(0);
+			}
+		}
+
+		$( "#current_user_must_pay" ).keyup(must_pay_amounts);
+
+		$( "#other_user_must_pay" ).keyup(must_pay_amounts);
+
+		$('#split_type').change(function() {
+			if ($('#split_type option:selected').text() == 'Choose...'){
+				$('#current_user_must_pay').attr('disabled', false);
+				$('#other_user_must_pay').attr('disabled', false);
+				$('.percentage-span').css('display', 'none');
+			}
+			else if($('#split_type option:selected').text() == 'Equal') {
+				let ta = parseInt($('#total_amount').val());
+				$('#current_user_must_pay').attr('disabled', true);
+				$('#other_user_must_pay').attr('disabled', true);
+				$('#current_user_must_pay').val(ta/2);
+				$('#other_user_must_pay').val(ta/2);
+				$('.percentage-span').css('display', 'none');
+			}
+			else if($('#split_type option:selected').text() == 'Exact') {
+				$('#current_user_must_pay').attr('disabled', false);
+				$('#other_user_must_pay').attr('disabled', false);
+				$('.percentage-span').css('display', 'none');
+			}
+			else if($('#split_type option:selected').text() == 'Percentage') {
+				$('#current_user_must_pay').attr('disabled', false);
+				$('#other_user_must_pay').attr('disabled', false);
+				$('.percentage-span').css('display', 'block');
+			}
+		});
+		
 		$('#add_expense').click(function(){
 			let error = false;
 			let friend_id;
@@ -282,6 +355,8 @@
 			let split_type;
 			let datetime;
 			let message;
+			let current_user_must_pay;
+			let other_user_must_pay;
 
 			if ($('#friend_name option:selected').text() == 'Choose...'){
 				$('#friend_name').css('border', '1px solid red');
@@ -289,7 +364,7 @@
 			}
 			else {
 				$('#friend_name').css('border', '1px solid #ced4da');
-				friend_id = $('#friend_name option:selected').val();
+				friend_id = $('#friend_name option:selected').val();		
 			}
 
 			if ($('#expense_name').val().match('^[a-zA-Z]{2,19}$') ) {
@@ -337,6 +412,61 @@
 				split_type = $('#split_type option:selected').val();
 			}
 
+			if( isPositiveInteger($('#current_user_must_pay').val()) ) {
+				$('#current_user_must_pay').css('border', '1px solid #ced4da');
+			}
+			else {
+				$('#current_user_must_pay').css('border', '1px solid red');
+				error = true;
+			}
+			
+			if( isPositiveInteger($('#other_user_must_pay').val()) ) {
+				$('#other_user_must_pay').css('border', '1px solid #ced4da');
+			}
+			else {
+				$('#other_user_must_pay').css('border', '1px solid red');
+				error = true;
+			}
+
+			if (split_type == 'equal' && total_amount){
+				if( parseInt($('#current_user_must_pay').val()) + parseInt($('#other_user_must_pay').val()) == total_amount) {
+					$('#total_amount_remaining').css('display','none');
+					current_user_must_pay = $('#current_user_must_pay').val();
+					other_user_must_pay = $('#other_user_must_pay').val();
+				}
+				else {
+					$('#total_amount_remaining').css('display','block');
+					error = true;
+				}	
+			}
+			
+			if (split_type == 'exact' && total_amount){
+				if( parseInt($('#current_user_must_pay').val()) + parseInt($('#other_user_must_pay').val()) == total_amount) {
+					$('#total_amount_remaining').css('display','none');
+					current_user_must_pay = $('#current_user_must_pay').val();
+					other_user_must_pay = $('#other_user_must_pay').val();
+				}
+				else {
+					$('#total_amount_remaining').css('display','block');
+					error = true;
+				}	
+			}
+			
+			if (split_type == 'percentage' && total_amount){
+				
+				if( parseInt($('#current_user_must_pay').val()) + parseInt($('#other_user_must_pay').val()) == 100 ) {
+					$('#total_amount_remaining').css('display','none');
+					current_user_must_pay = $('#current_user_must_pay').val();
+					other_user_must_pay = $('#other_user_must_pay').val();
+				}
+				else {
+					$('#total_amount_remaining').css('display','block');
+					error = true;
+				}	
+			}
+			
+			
+			
 			if($('#datetime-local').val() == '') {
 				$('#datetime-local').css('border', '1px solid red');
 				error = true;
@@ -355,14 +485,14 @@
 			}
 
 			if(!error) {
-				console.log(friend_id);
+				{% comment %} console.log(friend_id);
 				console.log(expense_name);
 				console.log(total_amount);
 				console.log(current_user_amount);
 				console.log(other_user_amount);
 				console.log(split_type);
 				console.log(datetime);
-				console.log(message);
+				console.log(message); {% endcomment %}
 				
 				url = '{% url 'add_friend' %}';
 				$.ajax({
@@ -370,7 +500,7 @@
 					data: {
 						csrfmiddlewaretoken: "{{ csrf_token }}",
 						state:"inactive",
-						'request_motive': 'expense',
+						'request_motive': 'add_expense',
 						'friend_id': friend_id,
 						'expense_name': expense_name,
 						'total_amount': total_amount,
@@ -378,7 +508,9 @@
 						'other_user_amount': other_user_amount,
 						'split_type': split_type,
 						'datetime': datetime,
-						'message': message
+						'message': message,
+						'current_user_must_pay': current_user_must_pay,
+						'other_user_must_pay': other_user_must_pay
 					},
 					type: 'post',
 					success: function(result){

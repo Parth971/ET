@@ -3,7 +3,7 @@ from email import message
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 
-from home.models import CustomUser, Activity, Group, Group_Membership, Friend
+from home.models import CustomUser, Activity, Group, Group_Membership, Friend, Bill, Settlement
 from django.db.models import Q
 from django.contrib.auth import logout
 from django.contrib.auth import authenticate, login
@@ -12,7 +12,7 @@ from django.db.utils import IntegrityError
 import sqlite3
 import re
 import json
-import datetime
+from datetime import datetime
 
 # helper funtions
 def check(email):
@@ -56,6 +56,26 @@ def is_phone_valid(s):
     Pattern = re.compile("(0|91)?[7-9][0-9]{9}")
     return Pattern.match(s)
 
+def get_amount_parted(lis, split_type):
+    total_amount = sum(lis)
+
+    if split_type=='Equal':
+        return [total_amount/len(lis) for i in range(len(lis))]
+    elif split_type=='Exact':
+        pass
+    elif split_type=='Percentage':
+        pass
+    else:
+        print(split_type + ' - not valid')
+        return
+
+
+
+
+def get_paid_debts(current_paid_amount, must_pay):
+    if current_paid_amount >= must_pay:
+        return (current_paid_amount, 0)
+    return(current_paid_amount, must_pay-current_paid_amount)
 
 # return json_data 
 def invite_friend(request):
@@ -124,7 +144,7 @@ def accept_reject_friend_request(request):
             current_group.save()
         except IntegrityError as e:
             data = {
-                'message' : 'Sent invite Failed'+str(e)
+                'message' : 'Accept request Failed - ' + str(e)
             }
             json_data = json.dumps(data)
     else:
@@ -140,7 +160,7 @@ def accept_reject_friend_request(request):
 
         except IntegrityError as e:
             data = {
-                'message' : 'Sent invite Failed'+str(e)
+                'message' : 'Reject request Failed - '+str(e)
             }
             json_data = json.dumps(data)
             return json_data
@@ -152,7 +172,50 @@ def accept_reject_friend_request(request):
 
     return json_data
 
+def add_expense(request):
+    friend_id = request.POST.get('friend_id')
+    expense_name  = request.POST.get('expense_name')
+    total_amount  = request.POST.get('total_amount')
+    current_user_amount  = request.POST.get('current_user_amount')
+    other_user_amount  = request.POST.get('other_user_amount')
+    split_type  = request.POST.get('split_type')
+    dt  = request.POST.get('datetime')
+    message  = request.POST.get('message')
 
+    print(friend_id, expense_name, total_amount, current_user_amount, other_user_amount, split_type, datetime, message)
+
+    try:
+        
+        d = datetime.strptime(dt, '%Y-%m-%dT%H:%M')
+
+        b = Bill(bill_name=expense_name, status='PENDING', date=d, amount=int(total_amount), split_type=split_type)
+        b.save()
+
+        friend = CustomUser.objects.get(id=friend_id)
+
+        friend_row = Friends.objects.filter(Q(friend1=friend, friend2=request.user) | Q(friend1=request.user, friend2=friend))[0]
+        grp = friend_row.group_id
+
+        activity = Activity(user_id=friend, sender_id=request.user, group_id=grp, bill_id=b, message_type=split_type, message=message, status='PENDING', date=datetime.now() )
+        activity.save()
+
+        parted_amounts = get_amount_parted([current_user_amount, other_user_amount], split_type=split_type)
+
+        paid, debts = get_paid_debts(current_paid_amount, must_pay)
+
+        # settlement = Settlement(user_id=friend, bill_id=b, group_id=grp, paid=)
+        
+        data = {
+            'message' : 'Sent Expense'
+        }
+        json_data = json.dumps(data) 
+    except IntegrityError as e:
+        data = {
+            'message' : 'Sent Expense Failed - ' + str(e)
+        }
+        json_data = json.dumps(data)
+
+    return json_data
 
 # Create your views here.
 
@@ -255,16 +318,20 @@ def dashboard(request):
 
 def add_friend(request):
     
-    if request.method == 'POST' and 'friend_id' in request.POST:
+    if request.method == 'POST' and request.POST.get('request_motive') == 'send_friend_request':
         # to invite friend
         json_data = invite_friend(request)
         return HttpResponse(json_data, content_type="application/json")
 
-    if request.method == 'POST' and 'activity_id' in request.POST:
+    if request.method == 'POST' and request.POST.get('request_motive') == 'accept_reject_friend_request':
         # to accept or reject friend request
         json_data = accept_reject_friend_request(request)
         return HttpResponse(json_data, content_type="application/json")
 
+    if request.method == 'POST' and request.POST.get('request_motive') == 'add_expense':
+        # json_data = add_expense(request)
+        json_data = {'1':'1'}
+        return HttpResponse(json_data, content_type="application/json")
 
     # taking all users which is not in friend with current user.
     # this users list doesnt contain users to which friend request is sent
@@ -312,9 +379,5 @@ def add_friend(request):
 
 def add_group(request):
     return HttpResponse('add_group')
-
-
-def add_expense(request):
-    pass
 
 
