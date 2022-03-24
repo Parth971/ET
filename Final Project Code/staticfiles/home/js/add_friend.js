@@ -25,11 +25,11 @@ $(document).ready(function () {
         let AR = $(this).text();
         let bill_id = $('#div_bill_id').text();
 
-
+        url = '{% url 'add_friend' %}';
         $.ajax({
             url: url,
             data: {
-                csrfmiddlewaretoken: crf_token,
+                csrfmiddlewaretoken: "{{ csrf_token }}",
                 state: "inactive",
                 'request_motive': 'accept_reject_bill_validation',
                 'bill_id': bill_id,
@@ -52,11 +52,11 @@ $(document).ready(function () {
         let bill_request_class = this;
         let bill_id = this.id;
         console.log(bill_id);
-
+        url = '{% url 'add_friend' %}';
         $.ajax({
             url: url,
             data: {
-                csrfmiddlewaretoken: crf_token,
+                csrfmiddlewaretoken: "{{ csrf_token }}",
                 state: "inactive",
                 'request_motive': 'get_settlements_data',
                 'bill_id': bill_id,
@@ -91,11 +91,11 @@ $(document).ready(function () {
 
     $('.all-friends').click(function () {
         let current_id = this.id;
-
+        url = '{% url 'add_friend' %}';
         $.ajax({
             url: url,
             data: {
-                csrfmiddlewaretoken: crf_token,
+                csrfmiddlewaretoken: "{{ csrf_token }}",
                 state: "inactive",
                 'request_motive': 'send_friend_request',
                 'friend_id': current_id
@@ -112,11 +112,11 @@ $(document).ready(function () {
 
     $('.my_friends').click(function () {
         let current_id = this.id;
-
+        url = '{% url 'add_friend' %}';
         $.ajax({
             url: url,
             data: {
-                csrfmiddlewaretoken: crf_token,
+                csrfmiddlewaretoken: "{{ csrf_token }}",
                 state: "inactive",
                 'request_motive': 'get_bills_of_my_friend',
                 'friend_id': current_id
@@ -126,21 +126,8 @@ $(document).ready(function () {
 
                 let main_dict = result.main_dict;
 
-                
-                s = `<thead>
-                <tr>
-                        <th scope="col">Bill Name</th>
-                        <th scope="col">Bill Amount</th>
-                        <th scope="col">Split Type</th>
-                        <th scope="col">Date</th>
-                        <th scope="col">Status</th>
-                        <th scope="col">Paid Amount</th>
-                        <th scope="col">Debts</th>
-                        <th scope="col">Receiving Amount</th>
-                        <th scope="col">Settle</th>
-                    </tr>
-                </thead>
-                <tbody>`;
+                let tbody = $('.active_expenses tbody');
+                tbody.empty();
 
                 for (let i = 0; i < main_dict.length; i++) {
                     let pk = JSON.parse(main_dict[i].bills)[0].pk
@@ -148,8 +135,8 @@ $(document).ready(function () {
                     let receiving_amount = main_dict[i].receiving_amount
                     let current_settlement = JSON.parse(main_dict[i].current_settlement)[0].fields
 
-                    
-                    s += `<tr>
+
+                    s = `<tr>
 							<td>`+ bill_fields.bill_name + `</td>
 							<td>`+ bill_fields.amount + `</td>
 							<td>`+ bill_fields.split_type + `</td>
@@ -157,31 +144,16 @@ $(document).ready(function () {
 							<td>`+ bill_fields.status + `</td>
 							<td>`+ current_settlement.paid + `</td>
 							<td>`+ current_settlement.debt + `</td>
-							<td>`+ receiving_amount + `</td>`;
+							<td>`+ receiving_amount + `</td>`
 
 
                     if (current_settlement.debt != 0) {
-                        s += `<td><button type="button" class="btn btn-primary settle_bill_class" id='` + pk + `' data-bs-toggle="modal" data-bs-target="#settlement_modal">Settle</button></td>`;
+                        s += `<td><button type="button" class="btn btn-primary settle_bill_class" id='` + pk + `' data-bs-toggle="modal" data-bs-target="#settlement_modal">Settle</button></td>`
                     }
-                    s += `</tr>`;
-                }
+                    s += `</tr>`
 
-                s += ` </tbody>`;
-                let table = $('.active_expenses');
-                
-                if (main_dict.length == 0){
-                    table.empty();
-                    table.append(`<div class="alert alert-warning" role="alert">
-                    No Records found!!
-                  </div>`);
+                    tbody.append(s);
                 }
-                else {
-                    table.empty();
-                    table.append(s);
-                }
-
-                
-
 
                 $('.settle_bill_class').click(function () {
                     let current_clicked_id = this.id;
@@ -206,11 +178,11 @@ $(document).ready(function () {
 
         if (current_value > 0 && current_value <= max_payment_amount) {
             $('.invalid_value_error').css('display', 'none');
-
+            url = '{% url 'add_friend' %}';
             $.ajax({
                 url: url,
                 data: {
-                    csrfmiddlewaretoken: crf_token,
+                    csrfmiddlewaretoken: "{{ csrf_token }}",
                     state: "inactive",
                     'request_motive': 'settle_payment',
                     'bill_id': bill_id,
@@ -241,11 +213,11 @@ $(document).ready(function () {
         console.log(state);
         console.log(current_id);
 
-
+        url = '{% url 'add_friend' %}';
         $.ajax({
             url: url,
             data: {
-                csrfmiddlewaretoken: crf_token,
+                csrfmiddlewaretoken: "{{ csrf_token }}",
                 state: "inactive",
                 'request_motive': 'accept_reject_friend_request',
                 'activity_id': current_id,
@@ -365,7 +337,7 @@ $(document).ready(function () {
             friend_id = $('#friend_name option:selected').val();
         }
 
-        if ($('#expense_name').val().match('^(?!\s)(?!.*\s$)(?=.*[a-zA-Z0-9])[a-zA-Z0-9 ]{2,}')) {
+        if ($('#expense_name').val().match('^[a-zA-Z]{2,19}$')) {
             $('#expense_name').css('border', '1px solid #ced4da');
             expense_name = $('#expense_name').val();
         } else {
@@ -483,10 +455,23 @@ $(document).ready(function () {
         }
 
         if (!error) {
+            {% comment %} console.log(friend_id);
+            console.log(expense_name);
+            console.log(total_amount);
+            console.log(current_user_amount);
+            console.log(other_user_amount);
+            console.log(split_type);
+            console.log(datetime);
+            console.log(message);
+            console.log(current_user_must_pay);
+            console.log(other_user_must_pay); {% endcomment %}
+
+
+            url = '{% url 'add_friend' %}';
             $.ajax({
                 url: url,
                 data: {
-                    csrfmiddlewaretoken: crf_token,
+                    csrfmiddlewaretoken: "{{ csrf_token }}",
                     state: "inactive",
                     'request_motive': 'add_expense',
                     'friend_id': friend_id,
@@ -508,7 +493,7 @@ $(document).ready(function () {
                 failure: function () {
                     console.log('failed');
                 }
-            });
+            })
         }
 
     });

@@ -1,0 +1,232 @@
+{% extends 'base.html' %}
+
+
+{% block title %}Groups{% endblock title %}
+
+
+{% load static %}
+{% block css %}
+
+<link rel="stylesheet" href="{% static 'home/css/add_group.css' %}" type="text/css" />
+{% endblock css %}
+
+{% block body %}
+
+<div>
+    <div class="container py-5">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="container sidebar_container">
+                    <div class="row">
+                        <div class="col">Group Requests</div>
+                        <div class="col">
+                            <div class="dropdown">
+                                <button class="btn btn-secondary dropdown-toggle" type="button"
+                                    id="group_request_drop_down" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Requests
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="group_request_drop_down">
+                                    {% for activity in friend_requests %}
+                                    <li>
+                                        <div class="dropdown-item" id="{{ activity.id }}">
+                                            {{ activity.sender_id.username }}
+                                            <button type="button" class="btn btn-primary">Accept</button>
+                                            <button type="button" class="btn btn-primary">Reject</button>
+                                        </div>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">Group Invites</div>
+                        <div class="col">
+                            <div class="dropdown">
+                                <button class="btn btn-secondary dropdown-toggle" type="button"
+                                    id="group_invite_drop_down" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Invites
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="group_invite_drop_down">
+                                    {% for activity in pending_invites %}
+                                    <li>
+                                        <div class="dropdown-item friend_request" id="{{ activity.id }}">
+                                            {{ activity.user_id.username }}
+                                        </div>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">All Groups</div>
+                        <div class="col">
+                            <div class="dropdown">
+                                <button class="btn btn-secondary dropdown-toggle" type="button" id="all_group_drop_down"
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                    Groups
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="all_group_drop_down">
+                                    {% for friend in all_friends %}
+                                    <li>
+                                        <div class="dropdown-item my_friends" id="{{ friend.id }}">
+                                            {{ friend.username }}
+                                        </div>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                                data-bs-target="#add_group_modal">
+                                Add Group
+                            </button>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                                data-bs-target="#bill_request_modal">
+                                Show Bill Requests
+                            </button>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                                data-bs-target="#addexpense">
+                                Add Expenses
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <div class="col-md-9">
+                <table class="table table-striped active_expenses">
+                    <thead>
+                        <tr>
+                            <td>
+                                <div class="empty_table">
+                                    <div class="add_expense_btn_container">
+                                        <button type="button" class="btn custom-add-expense-button"
+                                            data-bs-toggle="modal" data-bs-target="#addexpense">
+                                            Add Expenses
+                                        </button>
+                                    </div>
+                                </div>
+                            </td>
+
+                        </tr>
+                    </thead>
+
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Add Group Modal -->
+<div class="modal fade" id="add_group_modal" tabindex="-1" aria-labelledby="add_group_modal_label" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="add_group_modal_label">Add Group</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="create_new_group_form">
+                    <div class="mb-3">
+                        <div class="dropdown">
+                            <button class="btn btn-secondary dropdown-toggle" type="button" id="add_friend_to_group" data-bs-toggle="dropdown" aria-expanded="false">
+                              Dropdown button
+                            </button>
+                            <span class="validation_error" id="group_member_number_error">
+                                Group has minimum 3 members.
+                            </span>
+                            <ul class="dropdown-menu" aria-labelledby="add_friend_to_group">
+                                {% for friend in all_friends %}
+                                    <li>
+                                        <div class="dropdown-item target_friend" id="{{ friend.id }}">
+											{{ friend.username }}
+										</div>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                          </div>
+                          <div class="span_friend_group">
+                            
+                          </div>
+                    </div>
+                    <div class="input-group">
+                        <span class="input-group-text">Group Name</span>
+                        <input type="text" aria-label="group name" id="group_name_input" class="form-control">
+                    </div>
+                    <div class="validation_error" id="group_name_error">
+                        Group name not valid.
+                    </div>
+                  </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="add_group_btn">Add</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Add Expense Modal -->
+<div class="modal fade" id="addexpense" tabindex="-1" aria-labelledby="addexpense_label" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addexpense_label">Add Expense</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                ...
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bill Requests Modal -->
+<div class="modal fade" id="bill_request_modal" tabindex="-1" aria-labelledby="bill_request_modal_label"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="bill_request_modal_label">Bill Requests</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                ...
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock body %}
+
+
+{% block js %}
+<script>
+    var url = '{% url 'add_group' %}';
+    var crf_token = "{{ csrf_token }}";
+</script>
+<script src="{% static 'home/js/add_group.js' %}"></script>
+{% endblock js %}

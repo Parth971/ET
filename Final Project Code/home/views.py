@@ -1,5 +1,6 @@
 from calendar import FRIDAY
 from email import message
+from tokenize import group
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 
@@ -11,8 +12,8 @@ from django.contrib.auth import authenticate, login
 from django.db.utils import IntegrityError
 import re
 import json
-from datetime import datetime
-
+from datetime import date, datetime
+from functools import reduce
 from django.core import serializers
 
 # helper funtions
@@ -71,7 +72,7 @@ def is_bill_settled(settlements):
     return True
 
 
-# return json_data 
+# return json_data for add_friends
 def invite_friend(request):
     user_id = request.POST.get('friend_id')
 
@@ -354,9 +355,53 @@ def settle_payment(request):
     return json_data
 
 
+# return json_data for add_groups
+def add_new_group(request):
+    try:
+        grp_name = request.POST.get('group_name')
+        mem_list = request.POST.get('member_ids')
+        mem_list = list(map(int, json.loads(mem_list)))
+
+        # check if group with this members already exists or not 
+
+        my_groups = Group_Membership.objects.filter(user_id=request.user).values_list('group_id', flat=True)
+        # 2 -> 43 45 46 
+        # 1 -> 43 45
+        # 5 -> 43 46 
+        t = [Group_Membership.objects.filter(user_id_id=i).values_list('group_id', flat=True) for i in mem_list]
+        t.append(my_groups) 
+        res = list(reduce(lambda i, j: i & j, (set(x) for x in t)))
+        
+        if res:
+            # grp already exists 
+            print('grp exists')
+        else:
+            grp = Group(group_name=grp_name, status='PENDING', date=datetime.now())
+            grp.save()
+            
+            bulk_gms = [Group_Membership(user_id_id=id, group_id=grp) for id in mem_list]
+            bulk_gms.append(Group_Membership(user_id_id=request.user.id, group_id=grp))
+            Group_Membership.objects.bulk_create(bulk_gms)
+
+            
+            notifications = [Activity(user_id_id=m_id, sender_id=request.user, group_id=grp, message_type='GROUP_INVITE', message='Join Group', status='PENDING', date=datetime.now()) for m_id in mem_list]
+            Activity.objects.bulk_create(notifications)
+
+    except IntegrityError as e:
+        data = {
+            'message' : 'Create group failed - ' + str(e)
+        }
+        json_data = json.dumps(data)
+
+    
+    json_data = {'1':'1'}
+    return json_data
+    
+
+
 # Create your views here.
 
-def sign_up(request):
+def home(request):
     if request.user.is_authenticated:
         return redirect('dashboard')
 
@@ -367,13 +412,7 @@ def sign_up(request):
             'password_match': False,
             'phone': False,
         }
-    return render(request, 'home/sign_up.html', errors)
-
-def log_in(request):
-    errors = {
-        'invalid_credentials': False
-    }
-    return render(request, 'home/login.html', errors)
+    return render(request, 'home/home.html', errors)
 
 def sign_up_handler(request):
     if request.method == 'POST':
@@ -392,7 +431,6 @@ def sign_up_handler(request):
         }
         if len(name) < 3 or not name.isalpha():
             errors['name'] = True
-            # errors.append('name should be more than 2 character long and only alphabets are allowed.')
 
         is_error = False
         if not check(email):
@@ -412,17 +450,15 @@ def sign_up_handler(request):
             is_error = True        
 
         if is_error:
-            return render(request, 'home/sign_up.html', errors)
+            # return render(request, 'home/home.html', errors)
+            return redirect('home')
         else:
             try:
                 user = CustomUser.objects.create_user(name, email, password)
-
-
                 user.phone = phone
                 user.save()
-                return redirect('sign_up')
+                return redirect('home')
             except IntegrityError as e:
-                print(e)
                 return HttpResponse('User already present, cant create this user!!') 
     return HttpResponse('404 page not found')
 
@@ -434,24 +470,25 @@ def login_handler(request):
 
         if user is not None:
             login(request, user)
-            return redirect('sign_up')
-        else:
-            errors = {
-                'invalid_credentials': True
-            }
-            return render(request, 'home/login.html', errors)
+        return redirect('home')
 
 
     return HttpResponse('404 page not found')
 
+
 def logout_handler(request):
     logout(request)
-    return redirect('sign_up')
+    return redirect('home')
 
 def dashboard(request):
+    if not request.user.is_authenticated:
+        return redirect('home')
     return render(request, 'home/dashboard.html')
+    
 
 def add_friend(request):
+    if not request.user.is_authenticated:
+        return redirect('home')
     
     if request.method == 'POST' and request.POST.get('request_motive') == 'send_friend_request':
         # to invite friend
@@ -534,6 +571,29 @@ def add_friend(request):
     return render(request, 'home/add_friend.html', context)
 
 def add_group(request):
-    return HttpResponse('add_group')
+    if not request.user.is_authenticated:
+        return redirect('home')
+
+    if request.method == 'POST' and request.POST.get('request_motive') == 'add_new_group':
+        json_data = add_new_group(request)
+        return HttpResponse(json_data, content_type="application/json")
+    
+    
+    # current friends
+    all_friends = []
+
+    all_friends1 = Friend.objects.filter(friend1=request.user, status='ACTIVE')
+    for i in all_friends1:
+        all_friends.append(i.friend2)
+
+    all_friends2 = Friend.objects.filter(friend2=request.user, status='ACTIVE')
+    for i in all_friends2:
+        all_friends.append(i.friend1)
+    
+
+    context = {
+        'all_friends': all_friends
+    }
+    return render(request, 'home/add_group.html', context)
 
 

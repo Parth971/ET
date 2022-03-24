@@ -11,20 +11,19 @@
 
 {% block body %}
 
-{% if request.user.is_authenticated %}
-    loged in as {{ request.user }}. You can <a href="{% url 'logout_handler' %}">Logout</a>
-{% endif %}
 
 <!-- get all friends group -->
 <!-- get all groups -->
 
 <!-- add friend -->
 <br>
-<a href="{% url 'add_friend' %}">Add friend</a>
+<a href="{% url 'add_friend' %}"><button type="button" class="btn btn-light">Friend</button></a>
 <!-- add group -->
-<br>
-<a href="{% url 'add_group' %}">Add Group</a>
+<a href="{% url 'add_group' %}"><button type="button" class="btn btn-light">Group</button></a>
 
 {% endblock body %}
 
-{% block js %}{% endblock js %}
+{% block js %}
+
+
+{% endblock js %}
