@@ -2,6 +2,8 @@ from tokenize import group
 from django.db import models
 
 
+
+
 from django.contrib.auth.models import AbstractUser
 
 class CustomUser(AbstractUser):
@@ -29,12 +31,18 @@ class Bill(models.Model):
     date = models.DateTimeField()
     status = models.CharField(max_length=20, default='PENDING')
 
+    def __str__(self):
+        return str(self.id) + ' | ' +  str(self.bill_name) + ' | ' + str(self.amount) + ' | ' + str(self.status)
+
 class Settlement(models.Model):
     user_id = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     bill_id = models.ForeignKey(Bill, on_delete=models.CASCADE)
     group_id = models.ForeignKey(Group, on_delete=models.CASCADE)
     paid = models.IntegerField()
     debt = models.IntegerField()
+
+    def __str__(self):
+        return str(self.user_id) + ' | ' + str(self.bill_id) + ' | ' + str(self.paid) + ' | ' +  str(self.debt)
 
 class Activity(models.Model):
     user_id = models.ForeignKey(CustomUser, related_name='CurrentUser', on_delete=models.CASCADE)

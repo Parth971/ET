@@ -9,10 +9,11 @@ from django.contrib.auth import logout
 from django.contrib.auth import authenticate, login
 
 from django.db.utils import IntegrityError
-import sqlite3
 import re
 import json
 from datetime import datetime
+
+from django.core import serializers
 
 # helper funtions
 def check(email):
@@ -56,26 +57,19 @@ def is_phone_valid(s):
     Pattern = re.compile("(0|91)?[7-9][0-9]{9}")
     return Pattern.match(s)
 
-def get_amount_parted(lis, split_type):
-    total_amount = sum(lis)
-
-    if split_type=='Equal':
-        return [total_amount/len(lis) for i in range(len(lis))]
-    elif split_type=='Exact':
-        pass
-    elif split_type=='Percentage':
-        pass
-    else:
-        print(split_type + ' - not valid')
-        return
-
-
-
-
 def get_paid_debts(current_paid_amount, must_pay):
     if current_paid_amount >= must_pay:
         return (current_paid_amount, 0)
     return(current_paid_amount, must_pay-current_paid_amount)
+
+def is_bill_settled(settlements):
+
+    for row in settlements:
+        if row.debt != 0:
+            return False
+    
+    return True
+
 
 # return json_data 
 def invite_friend(request):
@@ -85,19 +79,14 @@ def invite_friend(request):
     current_user = request.user
 
     try:
-        group = Group(group_name='Friends', status='PENDING', date=datetime.datetime.now() )
+        group = Group(group_name='Friends', status='PENDING', date=datetime.now() )
         group.save()
 
         friend_row = Friend(friend1=current_user, friend2=friend_user, group_id=group, status='PENDING')
         friend_row.save()
 
-        gm1 = Group_Membership(user_id=current_user, group_id=group)
-        gm2 = Group_Membership(user_id=friend_user, group_id=group)
-
-        gm1.save()
-        gm2.save()
-
-        activity = Activity(user_id=friend_user, sender_id=current_user, group_id=group, message_type='INVITE',  message='lets join in!!!', status='PENDING', date=datetime.datetime.now() )
+        
+        activity = Activity(user_id=friend_user, sender_id=current_user, group_id=group, message_type='INVITE',  message='lets join in!!!', status='PENDING', date=datetime.now() )
 
         activity.save()
 
@@ -113,7 +102,6 @@ def invite_friend(request):
         json_data = json.dumps(data)
         
     return json_data
-
 
 def accept_reject_friend_request(request):
     activity_id = request.POST.get('activity_id')
@@ -175,12 +163,15 @@ def accept_reject_friend_request(request):
 def add_expense(request):
     friend_id = request.POST.get('friend_id')
     expense_name  = request.POST.get('expense_name')
-    total_amount  = request.POST.get('total_amount')
-    current_user_amount  = request.POST.get('current_user_amount')
-    other_user_amount  = request.POST.get('other_user_amount')
+    total_amount  = int(request.POST.get('total_amount'))
+    current_user_amount  = int(request.POST.get('current_user_amount'))
+    other_user_amount  = int(request.POST.get('other_user_amount'))
     split_type  = request.POST.get('split_type')
     dt  = request.POST.get('datetime')
     message  = request.POST.get('message')
+    current_user_must_pay  = int(request.POST.get('current_user_must_pay'))
+    other_user_must_pay  = int(request.POST.get('other_user_must_pay'))
+
 
     print(friend_id, expense_name, total_amount, current_user_amount, other_user_amount, split_type, datetime, message)
 
@@ -188,23 +179,28 @@ def add_expense(request):
         
         d = datetime.strptime(dt, '%Y-%m-%dT%H:%M')
 
-        b = Bill(bill_name=expense_name, status='PENDING', date=d, amount=int(total_amount), split_type=split_type)
+        b = Bill(bill_name=expense_name, status='PENDING', date=d, amount=total_amount, split_type=split_type)
         b.save()
 
         friend = CustomUser.objects.get(id=friend_id)
 
-        friend_row = Friends.objects.filter(Q(friend1=friend, friend2=request.user) | Q(friend1=request.user, friend2=friend))[0]
+        friend_row = Friend.objects.filter(Q(friend1=friend, friend2=request.user) | Q(friend1=request.user, friend2=friend))[0]
         grp = friend_row.group_id
 
-        activity = Activity(user_id=friend, sender_id=request.user, group_id=grp, bill_id=b, message_type=split_type, message=message, status='PENDING', date=datetime.now() )
+        activity = Activity(user_id=friend, sender_id=request.user, group_id=grp, bill_id=b, message_type='EXPENSE', message=message, status='PENDING', date=datetime.now() )
         activity.save()
 
-        parted_amounts = get_amount_parted([current_user_amount, other_user_amount], split_type=split_type)
+        if split_type == 'percentage':
+            current_user_must_pay = total_amount*(current_user_must_pay/100)
+            other_user_must_pay = total_amount*(other_user_must_pay/100)
 
-        paid, debts = get_paid_debts(current_paid_amount, must_pay)
+        paid1, debts1 = get_paid_debts(current_user_amount, int(current_user_must_pay))
+        paid2, debts2 = get_paid_debts(other_user_amount, int(other_user_must_pay))
 
-        # settlement = Settlement(user_id=friend, bill_id=b, group_id=grp, paid=)
-        
+        settlement = Settlement(user_id=request.user, bill_id=b, group_id=grp, paid=paid1, debt=debts1)
+        settlement.save()
+        settlement = Settlement(user_id=friend, bill_id=b, group_id=grp, paid=paid2, debt=debts2)
+        settlement.save()
         data = {
             'message' : 'Sent Expense'
         }
@@ -216,6 +212,147 @@ def add_expense(request):
         json_data = json.dumps(data)
 
     return json_data
+
+
+def get_bills_of_my_friend(request):
+    
+    friend_id = request.POST.get('friend_id')
+    friend = CustomUser.objects.get(id=friend_id)  
+    print(friend)
+
+    friend_id = Friend.objects.filter(Q(friend1=request.user, friend2=friend) | Q(friend1=friend, friend2=request.user))[0]
+    print(friend_id)
+
+    grp_id = friend_id.group_id
+    print(grp_id)
+
+    bills_active = Activity.objects.select_related('bill_id').filter(Q(user_id=request.user, sender_id=friend) | Q(user_id=friend, sender_id=request.user), message_type='EXPENSE', status='ACCEPT')
+    bills = [i.bill_id for i in bills_active]
+    settlement = Settlement.objects.filter(bill_id__in=bills, user_id=request.user)
+
+    main_dict = []
+
+    for i in range(len(bills_active)):
+        temp_settles = Settlement.objects.filter(bill_id=bills_active[i].bill_id)
+        if temp_settles[0] in settlement:
+            receiving_amount = temp_settles[1].debt
+            current_settlement = temp_settles[0]
+        else:
+            receiving_amount = temp_settles[0].debt
+            current_settlement = temp_settles[1]
+        bills = serializers.serialize("json", [bills_active[i].bill_id,])
+        current_settlement = serializers.serialize("json", [current_settlement,])
+        main_dict.append({'bills': bills, 'receiving_amount': receiving_amount, 'current_settlement': current_settlement})
+
+    data = {
+        'message' : 'Bills forwarded successfully',
+        'main_dict': main_dict,
+    }
+    json_data = json.dumps(data)
+
+    return json_data
+
+def get_settlements_data(request):
+
+    bill_id = request.POST.get('bill_id')
+
+    settlement = Settlement.objects.filter(bill_id_id=bill_id)
+
+    data_dict = {}
+
+    for i in settlement:
+        if i.user_id == request.user:
+            data_dict['paid'] = i.paid        
+            data_dict['debt'] = i.debt
+        else:
+            data_dict['receiving_amount'] = i.debt
+
+    
+
+    data = {
+        'message' : 'Settlement  data forwarded',
+        'data_dict': data_dict
+
+    }
+    json_data = json.dumps(data)
+
+    return json_data
+
+def accept_reject_bill_validation(request):
+    if request.POST.get('state') == 'Accept':
+        try:
+            bill_id = request.POST.get('bill_id')
+            bill = Bill.objects.get(id=bill_id)
+            print(bill)
+
+            settlements = Settlement.objects.filter(bill_id=bill)
+
+            if is_bill_settled(settlements):
+                bill.status = 'SETTLED'
+            else:
+                bill.status = 'UNSETTLED'
+
+            act = Activity.objects.get(user_id=request.user, bill_id=bill)
+            act.status = 'ACCEPT'
+
+            act.save()
+            bill.save()
+
+
+        except IntegrityError as e:
+            data = {
+                'message' : 'Bill Accept Failed - ' + str(e)
+            }
+            json_data = json.dumps(data)
+    
+    else:
+        try:
+            bill_id = request.POST.get('bill_id')
+            bill = Bill.objects.get(id=bill_id)
+
+            bill.delete()
+            
+        except IntegrityError as e:
+            data = {
+                'message' : 'Bill Decline Failed - ' + str(e)
+            }
+            json_data = json.dumps(data)
+
+    data = {
+        'message' : request.POST.get('state') + 'ed - '
+    }
+    json_data = json.dumps(data)
+
+    return json_data
+
+def settle_payment(request):
+    bill_id = request.POST.get('bill_id')
+    payed_amount = request.POST.get('payed_amount')
+
+    bill = Bill.objects.get(id=bill_id)
+
+    settlement = Settlement.objects.get(user_id=request.user, bill_id=bill)
+
+    settlement.paid += int(payed_amount)
+    settlement.debt -= int(payed_amount)
+
+    settlement.save()
+
+    settlement = Settlement.objects.filter(bill_id=bill)
+
+    for i in range(len(settlement)):
+        if settlement[i].debt != 0:
+            break
+    else:
+        bill.status = 'SETTLED'
+        bill.save()
+
+    data = {
+        'message' : 'Payment Successful'
+    }
+    json_data = json.dumps(data)
+    return json_data
+
 
 # Create your views here.
 
@@ -311,8 +448,6 @@ def logout_handler(request):
     logout(request)
     return redirect('sign_up')
 
-
-
 def dashboard(request):
     return render(request, 'home/dashboard.html')
 
@@ -329,9 +464,25 @@ def add_friend(request):
         return HttpResponse(json_data, content_type="application/json")
 
     if request.method == 'POST' and request.POST.get('request_motive') == 'add_expense':
-        # json_data = add_expense(request)
-        json_data = {'1':'1'}
+        json_data = add_expense(request)
         return HttpResponse(json_data, content_type="application/json")
+
+    if request.method == 'POST' and request.POST.get('request_motive') == 'get_bills_of_my_friend':
+        json_data = get_bills_of_my_friend(request)
+        return HttpResponse(json_data, content_type="application/json")
+
+    if request.method == 'POST' and request.POST.get('request_motive') == 'get_settlements_data':
+        json_data = get_settlements_data(request)
+        return HttpResponse(json_data, content_type="application/json")
+
+    if request.method == 'POST' and request.POST.get('request_motive') == 'accept_reject_bill_validation':
+        json_data = accept_reject_bill_validation(request)
+        return HttpResponse(json_data, content_type="application/json")
+
+    if request.method == 'POST' and request.POST.get('request_motive') == 'settle_payment':
+        json_data = settle_payment(request)
+        return HttpResponse(json_data, content_type="application/json")
+
 
     # taking all users which is not in friend with current user.
     # this users list doesnt contain users to which friend request is sent
@@ -369,11 +520,16 @@ def add_friend(request):
         all_friends.append(i.friend1)
 
 
+    # all_bill_verifications
+    bills_requests = Activity.objects.select_related('bill_id').filter(user_id=request.user, message_type='EXPENSE', status='PENDING')
+
+
     context = {
         'users': users,
         'friend_requests': friend_requests,
         'pending_invites': pending_invites,
-        'all_friends': all_friends
+        'all_friends': all_friends,
+        'bills_requests': bills_requests,
         }
     return render(request, 'home/add_friend.html', context)
 

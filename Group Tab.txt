@@ -114,7 +114,7 @@ id	name	spender_id	date	        amount 		split_type	status
 1	food	1		12/02/2022      2000		Equal		UNSETTLED
 
 
-settlements table 
+settlements table
 id 	b_id 	g_id 	u_id	payed	debts
 1	1	1	1	2000	0
 2	1	1	2	0	500
