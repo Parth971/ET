@@ -40,3 +40,8 @@ div.add_expense_btn_container {
     color: red;
     display: none;
 }
+
+#add_group_response {
+    display: none;
+    margin-top: 10px;
+}

@@ -12,6 +12,7 @@ from django.contrib.auth import authenticate, login
 from django.db.utils import IntegrityError
 import re
 import json
+from django.core.serializers.json import DjangoJSONEncoder
 from datetime import date, datetime
 from functools import reduce
 from django.core import serializers
@@ -174,7 +175,7 @@ def add_expense(request):
     other_user_must_pay  = int(request.POST.get('other_user_must_pay'))
 
 
-    print(friend_id, expense_name, total_amount, current_user_amount, other_user_amount, split_type, datetime, message)
+    print(friend_id, expense_name, total_amount, current_user_amount, other_user_amount, split_type, dt, message)
 
     try:
         
@@ -361,42 +362,131 @@ def add_new_group(request):
         grp_name = request.POST.get('group_name')
         mem_list = request.POST.get('member_ids')
         mem_list = list(map(int, json.loads(mem_list)))
+        # 4
+        # [1,2,3,4]
+        # print(request.user.id)
+        # mem_list.append(request.user.id)
+
+        # t = Group_Membership.objects.filter(user_id__in=mem_list).exists()
+        # print(t)
 
         # check if group with this members already exists or not 
 
         my_groups = Group_Membership.objects.filter(user_id=request.user).values_list('group_id', flat=True)
-        # 2 -> 43 45 46 
+        # 2 -> 43 45 46
         # 1 -> 43 45
         # 5 -> 43 46 
-        t = [Group_Membership.objects.filter(user_id_id=i).values_list('group_id', flat=True) for i in mem_list]
-        t.append(my_groups) 
-        res = list(reduce(lambda i, j: i & j, (set(x) for x in t)))
-        
-        if res:
-            # grp already exists 
-            print('grp exists')
+
+        temp_members = mem_list + [request.user.id]
+        # print('temp_members', temp_members)
+        # print('my_groups', my_groups)
+        for m_grp in my_groups:
+            # print(m_grp)
+            g = Group_Membership.objects.filter(group_id_id=m_grp).values_list('user_id', flat=True)
+            if sorted(list(g)) == sorted(temp_members):
+                # grp already exists 
+                data = {
+                    'message' : 'Group already exists.',
+                    'status': 'Failed'
+                }
+                json_data = json.dumps(data)
+                break
         else:
-            grp = Group(group_name=grp_name, status='PENDING', date=datetime.now())
+            grp = Group(group_name=grp_name, status='ACTIVE', date=datetime.now())
             grp.save()
             
             bulk_gms = [Group_Membership(user_id_id=id, group_id=grp) for id in mem_list]
             bulk_gms.append(Group_Membership(user_id_id=request.user.id, group_id=grp))
             Group_Membership.objects.bulk_create(bulk_gms)
-
             
-            notifications = [Activity(user_id_id=m_id, sender_id=request.user, group_id=grp, message_type='GROUP_INVITE', message='Join Group', status='PENDING', date=datetime.now()) for m_id in mem_list]
+            notifications = [Activity(user_id_id=m_id, sender_id=request.user, group_id=grp, message_type='GROUP_CREATED', message='You have been added.', status='ACTIVE', date=datetime.now()) for m_id in mem_list]
             Activity.objects.bulk_create(notifications)
+
+            data = {
+                'message' : 'Group Created.',
+                'status': 'Success'
+            }
+            json_data = json.dumps(data)
 
     except IntegrityError as e:
         data = {
-            'message' : 'Create group failed - ' + str(e)
+            'message' : 'Group not Created due to ' + str(e),
+            'status': 'Failed'
         }
         json_data = json.dumps(data)
 
-    
-    json_data = {'1':'1'}
     return json_data
+
+# hold till add expense done 
+def get_grp_details(request):
+
+    grp_id = int(request.POST.get('group_id'))
+
+
+    data = {
+        'message' : 'testing '
+    }
+    json_data = json.dumps(data)
+
+    return json_data
+
+
+def add_group_expense(request):
+
+    group_id = int(request.POST.get('group_id'))
+    expense_name = request.POST.get('expense_name')
+    total_amount = int(request.POST.get('total_amount'))
+    member_payed_amount_dic = json.loads(request.POST.get('member_payed_amount_dic'))
+    member_must_pay_amount_dic = json.loads(request.POST.get('member_must_pay_amount_dic'))
+    split_type = request.POST.get('split_type')
+    dt = request.POST.get('datetime')
+    message = request.POST.get('message')
     
+    print(group_id, expense_name, total_amount, member_payed_amount_dic, member_must_pay_amount_dic, split_type, dt, message)
+
+    members = member_payed_amount_dic.keys()
+
+    try:
+        d = datetime.strptime(dt, '%Y-%m-%dT%H:%M')
+
+        b = Bill(bill_name=expense_name, status='PENDING', date=d, amount=total_amount, split_type=split_type)
+        b.save()
+        
+        act_bulk = [Activity(user_id_id=int(mem), sender_id=request.user, group_id_id=group_id, bill_id=b, message_type='EXPENSE', message=message, status='PENDING', date=datetime.now()) for mem in members if int(mem) != request.user.id]
+        Activity.objects.bulk_create(act_bulk)
+
+        if split_type == 'percentage':
+            remains = 0
+            for mem_id in member_must_pay_amount_dic:
+                amount = total_amount*(member_must_pay_amount_dic[mem_id]/100)
+                member_must_pay_amount_dic[mem_id] = int(amount)
+                remains += amount-int(amount)
+                
+            for mem_id in member_must_pay_amount_dic:
+                if member_must_pay_amount_dic[mem_id] != 0:
+                    member_must_pay_amount_dic[mem_id] += 1
+                    remains -= 1
+                if remains == 0:
+                    break
+                
+        settles =[]
+        for member in members:
+            paid, debt = get_paid_debts(member_payed_amount_dic[member], member_must_pay_amount_dic[member])
+            s = Settlement(user_id_id=int(member), bill_id=b, group_id_id=group_id, paid=paid, must_pay=member_must_pay_amount_dic[member], debt=debt)
+            settles.append(s)
+        Settlement.objects.bulk_create(settles)
+   
+        data = {
+            'message' : 'Sent Expense'
+        }
+        json_data = json.dumps(data) 
+    except IntegrityError as e:
+        data = {
+            'message' : 'Sent Expense Failed - ' + str(e)
+        }
+        json_data = json.dumps(data)
+
+    return json_data
 
 
 # Create your views here.
@@ -577,6 +667,14 @@ def add_group(request):
     if request.method == 'POST' and request.POST.get('request_motive') == 'add_new_group':
         json_data = add_new_group(request)
         return HttpResponse(json_data, content_type="application/json")
+
+    if request.method == 'POST' and request.POST.get('request_motive') == 'get_grp_details':
+        json_data = get_grp_details(request)
+        return HttpResponse(json_data, content_type="application/json")
+        
+    if request.method == 'POST' and request.POST.get('request_motive') == 'add_group_expense':
+        json_data = add_group_expense(request)
+        return HttpResponse(json_data, content_type="application/json")
     
     
     # current friends
@@ -589,10 +687,19 @@ def add_group(request):
     all_friends2 = Friend.objects.filter(friend2=request.user, status='ACTIVE')
     for i in all_friends2:
         all_friends.append(i.friend1)
-    
+
+    # current groups 
+    my_groups = Group_Membership.objects.select_related('group_id').filter(user_id=request.user).values_list('group_id_id', 'group_id__group_name')
+
+    groups_members = {gid:list(Group_Membership.objects.filter(group_id=gid).values_list('user_id', 'user_id__username')) for gid, g_name in my_groups}
+
+    print(my_groups)
+    print(groups_members)
 
     context = {
-        'all_friends': all_friends
+        'all_friends': all_friends,
+        'my_groups': list(my_groups),
+        'groups_members': json.dumps(groups_members)
     }
     return render(request, 'home/add_group.html', context)
 

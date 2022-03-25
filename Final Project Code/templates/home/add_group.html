@@ -18,65 +18,20 @@
             <div class="col-md-3">
                 <div class="container sidebar_container">
                     <div class="row">
-                        <div class="col">Group Requests</div>
                         <div class="col">
                             <div class="dropdown">
-                                <button class="btn btn-secondary dropdown-toggle" type="button"
-                                    id="group_request_drop_down" data-bs-toggle="dropdown" aria-expanded="false">
-                                    Requests
-                                </button>
-                                <ul class="dropdown-menu" aria-labelledby="group_request_drop_down">
-                                    {% for activity in friend_requests %}
-                                    <li>
-                                        <div class="dropdown-item" id="{{ activity.id }}">
-                                            {{ activity.sender_id.username }}
-                                            <button type="button" class="btn btn-primary">Accept</button>
-                                            <button type="button" class="btn btn-primary">Reject</button>
-                                        </div>
-                                    </li>
-                                    {% endfor %}
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col">Group Invites</div>
-                        <div class="col">
-                            <div class="dropdown">
-                                <button class="btn btn-secondary dropdown-toggle" type="button"
-                                    id="group_invite_drop_down" data-bs-toggle="dropdown" aria-expanded="false">
-                                    Invites
-                                </button>
-                                <ul class="dropdown-menu" aria-labelledby="group_invite_drop_down">
-                                    {% for activity in pending_invites %}
-                                    <li>
-                                        <div class="dropdown-item friend_request" id="{{ activity.id }}">
-                                            {{ activity.user_id.username }}
-                                        </div>
-                                    </li>
-                                    {% endfor %}
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col">All Groups</div>
-                        <div class="col">
-                            <div class="dropdown">
-                                <button class="btn btn-secondary dropdown-toggle" type="button" id="all_group_drop_down"
-                                    data-bs-toggle="dropdown" aria-expanded="false">
-                                    Groups
-                                </button>
-                                <ul class="dropdown-menu" aria-labelledby="all_group_drop_down">
-                                    {% for friend in all_friends %}
-                                    <li>
-                                        <div class="dropdown-item my_friends" id="{{ friend.id }}">
-                                            {{ friend.username }}
-                                        </div>
-                                    </li>
-                                    {% endfor %}
-                                </ul>
-                            </div>
+								<button class="btn btn-primary dropdown-toggle" type="button" id="show_my_groups"
+									data-bs-toggle="dropdown" aria-expanded="false">
+									Show My Groups
+								</button>
+								<ul class="dropdown-menu" aria-labelledby="show_my_groups">
+									{% for grp_id, grp_name in my_groups %}
+									<li>
+										<div class="dropdown-item group_target" id="{{ grp_id }}">{{ grp_name }}</div>
+									</li>
+									{% endfor %}
+								</ul>
+							</div>
                         </div>
                     </div>
                     <div class="row">
@@ -171,6 +126,9 @@
                         Group name not valid.
                     </div>
                   </form>
+                  <div class="alert" id='add_group_response' role="alert">
+                    
+                  </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary" id="add_group_btn">Add</button>
@@ -190,11 +148,78 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                ...
+                <form id='expense_form'>
+					<div class="input-group mb-3">
+						<label class="input-group-text" for="inputGroupSelect01">With</label>
+						<select class="form-select" id="group_name">
+							<option value='0' selected>Choose...</option>
+							{% for grp_id, grp_name in my_groups %}
+							<option value="{{ grp_id }}">{{ grp_name }}</option>
+							{% endfor %}
+						</select>
+					</div>
+					<div class="mb-3">
+						<input type="text" class="form-control" id="expense_name" value='' placeholder='Expense Name'
+							name='expense_name'>
+					</div>
+
+                    
+                    <div id="all_grp_members_with_amount_wrapper">
+                        <div class="row">
+                            
+                        </div>
+                    </div>
+                    
+                    
+					
+
+					<div class="input-group mb-3">
+						<input type="text" class="form-control" aria-label="total_amount" placeholder='Total Amount'
+							disabled>
+						<span class="input-group-text">$</span>
+						<input type="text" class="form-control" id='total_amount' aria-label="total_amount" value='0'
+							disabled>
+						<div class="invalid-feedback" id='amount-zero'>
+							Amount not filled.
+						</div>
+					</div>
+
+					<div class="input-group mb-3">
+						<label class="input-group-text" for="inputGroupSelect02">Split Type</label>
+						<select class="form-select" id="split_type">
+							<option value='0' selected>Choose...</option>
+							<option value="equal">Equal</option>
+							<option value="exact">Exact</option>
+							<option value="percentage">Percentage</option>
+						</select>
+					</div>
+
+					
+                    <div id="all_grp_members_with_actual_amount_wrapper">
+                        <div class="row">
+                            
+                        </div>
+                    </div>
+                    <div class="invalid-feedback" id='total_amount_remaining'>
+                        Total Amount not same.
+                    </div>
+
+					<div class='input-group mb-3'>
+						<label class="form-control" for="datetime-local">Date-Time</label>
+						<input class="form-control" type="datetime-local" id="datetime-local">
+					</div>
+
+
+					<div class="mb-3">
+						<label for="message-text" class="col-form-label">Send Verify notification with message</label>
+						<textarea class="form-control" name='message' id="message-text"></textarea>
+					</div>
+
+				</form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary">Save changes</button>
+                <button type="button" class="btn btn-primary" id="add_group_expense_btn">Add Expense</button>
             </div>
         </div>
     </div>
@@ -227,6 +252,8 @@
 <script>
     var url = '{% url 'add_group' %}';
     var crf_token = "{{ csrf_token }}";
+    var groups_members = JSON.parse('{{ groups_members|safe }}');
+    // console.log(groups_members);
 </script>
 <script src="{% static 'home/js/add_group.js' %}"></script>
 {% endblock js %}

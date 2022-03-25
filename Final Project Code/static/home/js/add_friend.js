@@ -268,17 +268,35 @@ $(document).ready(function () {
         }
         else {
             $('#current_user_amount').css('border', '1px solid red');
-            $('#current_user_amount').val(0);
+            // $('#current_user_amount').val(0);
         }
         if (isPositiveInteger($('#other_user_amount').val())) {
             $('#other_user_amount').css('border', '1px solid #ced4da');
         }
         else {
             $('#other_user_amount').css('border', '1px solid red');
-            $('#other_user_amount').val(0);
+            // $('#other_user_amount').val(0);
         }
+        let val1 = $('#current_user_amount').val();
+        let val2 = $('#other_user_amount').val();
 
-        $("#total_amount").val(parseInt($('#current_user_amount').val()) + parseInt($('#other_user_amount').val()));
+        if ( isPositiveInteger(val1) && isPositiveInteger(val2) ) {
+            console.log('if');
+            $("#total_amount").val(parseInt(val1)+parseInt(val2));
+        }
+        else if (isPositiveInteger(val1)) {
+            console.log('elif 1');
+            $("#total_amount").val(val1);
+        }
+        else if (isPositiveInteger(val2)) {
+            console.log('elif 2');
+            $("#total_amount").val(val2);
+        }
+        else {
+            console.log('else');
+            $("#total_amount").val(0);
+        }
+        
     }
     $("#current_user_amount").keyup(validate_amounts);
 
@@ -302,14 +320,14 @@ $(document).ready(function () {
         }
         else {
             $('#current_user_must_pay').css('border', '1px solid red');
-            $('#current_user_must_pay').val(0);
+            // $('#current_user_must_pay').val(0);
         }
         if (isPositiveInteger($('#other_user_must_pay').val())) {
             $('#other_user_must_pay').css('border', '1px solid #ced4da');
         }
         else {
             $('#other_user_must_pay').css('border', '1px solid red');
-            $('#other_user_must_pay').val(0);
+            // $('#other_user_must_pay').val(0);
         }
     }
 
@@ -365,7 +383,8 @@ $(document).ready(function () {
             friend_id = $('#friend_name option:selected').val();
         }
 
-        if ($('#expense_name').val().match('^(?!\s)(?!.*\s$)(?=.*[a-zA-Z0-9])[a-zA-Z0-9 ]{2,}')) {
+        var re = /^(?!\s)(?!.*\s$)(?=.*[a-zA-Z0-9])[a-zA-Z0-9 ]{2,}$/;
+        if (re.test( $('#expense_name').val() )) {
             $('#expense_name').css('border', '1px solid #ced4da');
             expense_name = $('#expense_name').val();
         } else {

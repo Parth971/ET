@@ -39,6 +39,7 @@ class Settlement(models.Model):
     bill_id = models.ForeignKey(Bill, on_delete=models.CASCADE)
     group_id = models.ForeignKey(Group, on_delete=models.CASCADE)
     paid = models.IntegerField()
+    must_pay = models.IntegerField(default=0)
     debt = models.IntegerField()
 
     def __str__(self):
@@ -55,7 +56,7 @@ class Activity(models.Model):
     date = models.DateTimeField()
 
     def __str__(self):
-        return str(self.id) + '. ' + str(self.sender_id) + ' -> ' + str(self.user_id)
+        return str(self.id) + '. ' + str(self.sender_id) + ' -> ' + str(self.user_id) + ' | ' + str(self.message_type) + ' | ' + str(self.group_id)
 
 
 class Friend(models.Model):
