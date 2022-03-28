@@ -1,6 +1,3 @@
-from calendar import FRIDAY
-from email import message
-from tokenize import group
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 
@@ -16,6 +13,19 @@ from django.core.serializers.json import DjangoJSONEncoder
 from datetime import date, datetime
 from functools import reduce
 from django.core import serializers
+
+from django.contrib import messages
+from django.views.decorators.cache import cache_control
+
+from django.core.mail import send_mail, BadHeaderError
+from django.contrib.auth.forms import PasswordResetForm
+from django.template.loader import render_to_string
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.encoding import force_bytes
+
+
+
 
 # helper funtions
 def check(email):
@@ -492,84 +502,67 @@ def add_group_expense(request):
 # Create your views here.
 
 def home(request):
+    
+
     if request.user.is_authenticated:
         return redirect('dashboard')
 
-    errors = {
-            'name': False,
-            'email': False,
-            'password': False,
-            'password_match': False,
-            'phone': False,
-        }
-    return render(request, 'home/home.html', errors)
+
+    return render(request, 'home/home.html')
 
 def sign_up_handler(request):
     if request.method == 'POST':
         name = request.POST.get('username')
-        email = request.POST.get('useremail')
+        email = request.POST.get('email')
         password = request.POST.get('password')
-        cpassword = request.POST.get('cpassword')
+        cpassword = request.POST.get('confirmPassword')
         phone = request.POST.get('phone')
+        try:
+            user = CustomUser.objects.create_user(name, email, password)
+            user.phone = phone
+            user.save()
+            data = {
+                'message' : 'success'
+            }
+        except IntegrityError as e:
+            data = {
+                'message' : 'failed'
+            }
 
-        errors = {
-            'name': False,
-            'email': False,
-            'password': False,
-            'password_match': False,
-            'phone': False,
-        }
-        if len(name) < 3 or not name.isalpha():
-            errors['name'] = True
-
-        is_error = False
-        if not check(email):
-            errors['email'] = True
-            is_error = True
-
-        if not password_check(password):
-            errors['password'] = True
-            is_error = True
-
-        if password != cpassword:
-            errors['password_match'] = True
-            is_error = True
-
-        if not is_phone_valid(phone):
-            errors['phone'] = True
-            is_error = True        
-
-        if is_error:
-            # return render(request, 'home/home.html', errors)
-            return redirect('home')
-        else:
-            try:
-                user = CustomUser.objects.create_user(name, email, password)
-                user.phone = phone
-                user.save()
-                return redirect('home')
-            except IntegrityError as e:
-                return HttpResponse('User already present, cant create this user!!') 
+        json_data = json.dumps(data)
+        return HttpResponse(json_data, content_type="application/json")
     return HttpResponse('404 page not found')
 
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)
 def login_handler(request):
     if request.method == 'POST':
         username = request.POST['username']
-        password = request.POST['password']
+        password = request.POST['userpassword']
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
             login(request, user)
-        return redirect('home')
+            data = {
+                'message' : 'success'
+            }
+        else:
+            data = {
+                'message' : 'fail'
+            }
+        
+        
+        json_data = json.dumps(data)
+        return HttpResponse(json_data, content_type="application/json")
 
 
     return HttpResponse('404 page not found')
 
-
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)
 def logout_handler(request):
     logout(request)
     return redirect('home')
 
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)
 def dashboard(request):
     if not request.user.is_authenticated:
         return redirect('home')
@@ -703,4 +696,91 @@ def add_group(request):
     }
     return render(request, 'home/add_group.html', context)
 
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)
+def password_reset_confirm(request, uidb64=None, token=None):
+    assert uidb64 is not None and token is not None  # checked by URLconf
+    try:
+        uid = urlsafe_base64_decode(uidb64)
+        user = CustomUser.objects.get(pk=uid)
+    except:
+        user = None
 
+    if user is not None:
+        if request.method == 'POST':
+            if default_token_generator.check_token(user, token):
+                password1 = request.POST.get('new_password')
+                password2 = request.POST.get('new_password_confirm')
+                if password1 == password2 and len(password1) != 0:
+                    user.set_password(password1)
+                    user.save()
+                    messages.success(request,
+                                    'Password Changed! Login to Continue')
+                    return redirect('home')
+                else:
+                    messages.error(request,
+                                    'Both Passwords Must Match. Please try again!'
+                                    )
+                    return redirect('password_reset_confirm', uidb64=uidb64, token=token)
+            else:
+                # print('else')
+                messages.error(request,
+                                'The reset password link is no longer valid. Try again!'
+                                )
+                return redirect('home')
+        elif not default_token_generator.check_token(user, token):
+            # print('elif')
+            messages.error(request,
+                            'The reset password link is no longer valid. Try again!'
+                            )
+            return redirect('home')
+        else:
+            # return render(request, 'password_reset_confirm', uidb64=uidb64, token=token)
+            return render(request, 'home/confirm_password.html')
+    else:
+        # print('else')
+        messages.error  (request,
+                        'The reset password link is no longer valid. Try again!'
+                        )
+        return redirect('home')
+
+def password_reset_request(request):
+    if request.method == "POST":
+        password_reset_form = PasswordResetForm(request.POST)
+        if password_reset_form.is_valid():
+            data = password_reset_form.cleaned_data['email']
+            # print(data)
+            associated_users = CustomUser.objects.filter(email=data)
+            # print(associated_users)
+            if associated_users.exists():
+                for user in associated_users:
+                    subject = "Password Reset Requested"
+                    email_template_name = "password_reset_email.txt"
+                    c = {
+                        "email":user.email,
+                        'domain':'127.0.0.1:8000',
+                        'site_name': 'Website',
+                        "uid": urlsafe_base64_encode(force_bytes(user.pk)),
+                        "user": user,
+                        'token': default_token_generator.make_token(user),
+                        'protocol': 'http',
+					}
+                    email = render_to_string(email_template_name, c)
+                    try:
+                        send_mail(subject, email, 'admin@example.com' , [user.email], fail_silently=False)
+                        data = {
+                            'message' : 'success'
+                        }
+                    except BadHeaderError:
+                        return HttpResponse('Invalid header found.')
+                    
+                    json_data = json.dumps(data)
+                    return HttpResponse(json_data, content_type="application/json")
+
+            else:
+                data = {
+                    'message' : 'no_user_found'
+                }
+                json_data = json.dumps(data)
+                return HttpResponse(json_data, content_type="application/json")
+
+    return redirect('home')

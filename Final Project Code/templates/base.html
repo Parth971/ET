@@ -20,8 +20,9 @@
 <body>
 
 
+
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark" id="navibar">
-    <div class="container-fluid">
+    <div class="container">
       <!-- Brand image -->
       <a class="navbar-brand" href="{% url 'home' %}">
         <img id="brand-logo" alt="Brand" src="{% static 'home/images/brand-logo.png' %}">
@@ -42,34 +43,47 @@
         </ul>
 
         <ul class="d-flex nav-bar-btns">
-          
+
           {% if request.user.is_authenticated %}
-          <li class="nav-item user_name_tag">
+          <!-- <li class="nav-item user_name_tag">
             <span class="badge bg-secondary logged_user_tag">Logged as {{ request.user.username }}</span>
           </li>
           <li class="nav-item">
-              <a href="{% url 'logout_handler' %}"><button type="button" class="btn btn-outline-success">Logout</button></a>
+            <a href="{% url 'logout_handler' %}"><button type="button" class="btn btn-outline-light">Logout</button></a>
+          </li> -->
+
+          <li class="nav-item dropdown">
+            <button class="nav-link dropdown-toggle btn btn-outline-light" id="navbarDropdown" role="button"
+              data-bs-toggle="dropdown" aria-expanded="false">
+              {{ request.user.username }}
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+              <li><a href="{% url 'logout_handler' %}" class="dropdown-item">
+                  Logout
+                </a></li>
+            </ul>
           </li>
 
           {% else %}
-            
+
           <li class="nav-item">
-              <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#login_modal">
-                Login
-              </button>
-              <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#signup_modal">
-                Signup
-              </button>
-            </li>
+            <button type="button" class="btn btn-outline-light" data-bs-toggle="modal" data-bs-target="#login_modal">
+              Login
+            </button>
+            <button type="button" class="btn btn-outline-light" data-bs-toggle="modal" data-bs-target="#signup_modal">
+              Signup
+            </button>
+          </li>
 
           {% endif %}
 
-        
-          
+
+
         </ul>
       </div>
     </div>
   </nav>
+  {% include 'messages.html' %}
 
   {% block body %}{% endblock body %}
 
@@ -83,30 +97,43 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <div class="form-signin-wrapper text-center">
-            <form action="{% url 'login_handler' %}" method='POST'>
-              {% csrf_token %}
+          <div class="form-signin-wrapper">
+            <form>
               <div class="form-floating">
-                <input type="text" class="form-control" id="floatingInput1" placeholder="parth desai" name="username">
-                <label for="floatingInput1">Username</label>
-              </div>
-              <div class="form-floating">
-                <input type="password" class="form-control" id="floatingPassword" placeholder="Password"
-                  name="password">
-                <label for="floatingPassword">Password</label>
+                <input type="text" class="form-control" id="login_user_name" placeholder="Username">
+                <label for="login_user_name">Username</label>
+                <span class='validation_error' id='login_user_error'>
+                  <p>Username not valid!</p>
+                </span>
               </div>
 
-              {% if invalid_credentials %}
-              <p class="validation_error">Invalid Credentials</p>
-              {% endif %}
-              <div class="text-center">
-                <button class="btn btn-lg btn-primary my-3" type="submit">Log in</button>
+              <div class="form-floating">
+                <input type="password" class="form-control" id="login_password" placeholder='Password'
+                  autocomplete="on">
+                <label for="login_password">Password</label>
+                <span class='validation_error' id='login_password_error'>
+                  <p>Password not valid!</p>
+                </span>
               </div>
-              
             </form>
+
+            <div id="login_failed">
+
+            </div>
+
+            <div id="open_signup">
+              <a href="javascript:void(0)">Don't have account?</a>
+            </div>
+            <div id="forgot_password">
+              <a href="javascript:void(0)">Forgot password?</a>
+            </div>
+            <div class="text-center">
+              <button class="btn btn-lg btn-primary my-3" id="login_button">Log in</button>
+            </div>
+
           </div>
         </div>
-       
+
       </div>
     </div>
   </div>
@@ -122,67 +149,108 @@
         </div>
         <div class="modal-body">
           <div class="form-wrapper signup-box">
-            
-            <form action="{% url 'sign_up_handler' %}" method='POST'>
-              {% csrf_token %}
+
+            <form id="signup_form">
+              <div class="form-floating">
+                <input type="text" class="form-control" id="signup_user_name" placeholder="Username">
+                <label for="signup_user_name">Username</label>
+                <span class='validation_error' id='signup_username_error'>
+                  <p>Username not valid!</p>
+                </span>
+              </div>
 
               <div class="form-floating">
-                <input type="text" class="form-control" id="floatingInput" placeholder="parth desai" name="username">
-                <label for="floatingInput">Username</label>
+                <input type="email" class="form-control" id="signup_email" placeholder="name@example.com">
+                <label for="signup_email">Email address</label>
+                <span class='validation_error' id='signup_email_error'>
+                  <p>Email not valid!</p>
+                </span>
               </div>
-              {% if name %}
-              <p class="validation_error">
-                name should be more than 2 character long and only alphabets are allowed.
-              </p>
-              {% endif %}
+
               <div class="form-floating">
-                <input type="email" class="form-control" id="floatingInput2" placeholder="name@example.com"
-                  name="useremail">
-                <label for="floatingInput2">Email address</label>
+                <input type="password" class="form-control" id="signup_password" placeholder="Password"
+                  autocomplete="on">
+                <label for="signup_password">Password</label>
+                <span class='validation_error' id='signup_password_error'>
+                  <p>Password not valid!</p>
+                </span>
+                <div id="message">
+                  <h6>Password must contain the following:</h6>
+                  <p id="letter" class="invalid">A <b>lowercase</b> letter</p>
+                  <p id="capital" class="invalid">A <b>capital (uppercase)</b> letter</p>
+                  <p id="number" class="invalid">A <b>number</b></p>
+                  <p id="length" class="invalid">Minimum <b>8 characters</b></p>
+                </div>
               </div>
-              {% if email %}
-              <p class="validation_error">
-                Email not Valid!
-              </p>
-              {% endif %}
+
               <div class="form-floating">
-                <input type="password" class="form-control" id="floatingPassword1" placeholder="Password"
-                  name="password">
-                <label for="floatingPassword1">Password</label>
-                1. Should have at least one number. <br>
-                2. Should have at least one uppercase and one lowercase character. <br>
-                3. Should have at least one special symbol. <br>
-                4. Should be between 6 to 20 characters long.
+                <input type="password" class="form-control" id="signup_confirm_password" placeholder="Confirm Password"
+                  autocomplete="on">
+                <label for="signup_confirm_password">Confirm Password</label>
+                <span class='validation_error' id='signup_confirm_password_error'>
+                  <p>Password not matched!</p>
+                </span>
               </div>
-              {% if password %}
-              <p class="validation_error">
-                Password didnt match mentioned conditions.
-              </p>
-              {% endif %}
+
               <div class="form-floating">
-                <input type="password" class="form-control" id="floatingPassword2" placeholder="Confirm Password"
-                  name="cpassword">
-                <label for="floatingPassword2">Confirm Password</label>
+                <input type="text" class="form-control" id="signup_phone" placeholder="Phone">
+                <label for="signup_phone">Phone</label>
+                <span class='validation_error' id='signup_phone_error'>
+                  <p>Phone number not valid!</p>
+                </span>
               </div>
-              {% if password_match %}
-              <p class="validation_error">
-                Passwords didnt match with confirm password.
-              </p>
-              {% endif %}
-              <div class="form-floating">
-                <input type="text" class="form-control" id="phone" placeholder="Phone" name="phone">
-                <label for="phone">Phone</label>
-              </div>
-              {% if phone %}
-              <p class="validation_error">
-                Phone number not valid.
-              </p>
-              {% endif %}
-              <div class="text-center">
-              <button class="btn btn-lg btn-primary my-3" type="submit">Sign up</button>
-            </div>
+
             </form>
+
+            <div id="signup_failed">
+
+            </div>
+
+            <div id="open_login">
+              <a href="javascript:void(0)">Already have account?</a>
+            </div>
+
+            <div class="text-center">
+              <button class="btn btn-lg btn-primary my-3" id="signup_button">Sign up</button>
+            </div>
+
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Forgot password Modal -->
+  <div class="modal fade" id="forgot_password_modal" tabindex="-1" aria-labelledby="forgot_password_modal_label"
+    aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="forgot_password_modal_label">Reset Password</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+
+          <p>Forgotten your password? Enter your email address below, and we'll email instructions for setting a new
+            one.</p>
+          <form id="reset_password_form">
+            <div class="form-floating mb-3">
+              <input type="email" class="form-control" id="reset_password_email" placeholder="name@example.com">
+              <label for="reset_password_email">Email address</label>
+              <span class='validation_error' id='reset_password_email_error'>
+                <p>Email not valid!</p>
+              </span>
+            </div>
+
+          </form>
+
+
+          <div id="reset_password_message">
+
+          </div>
+          <button class="btn btn-primary" id='send_password_reset_mail'>Send email</button>
+
         </div>
       </div>
     </div>
@@ -201,7 +269,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.min.js" integrity="sha384-QJHtvGhmr9XOIpI6YVutG+2QOK9T+ZnN4kzFN1RtK3zEFEIsxhlmWl5/YESvpZ13" crossorigin="anonymous"></script>
     -->
   <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-  {% block js %}{% endblock js %}
+  {% block js %}
+  {% endblock js %}
 </body>
 
 </html>

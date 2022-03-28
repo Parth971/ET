@@ -1,12 +1,17 @@
-body{
-	background-color: #333647;
+html, body {
+    margin: 0;
+    padding: 0;
+    background-color: white;
+    color: black;
 }
 
-.home_text {
-	color: white;
+.navbar {
+    background-color: #18b46b!important;
 }
+
 .validation_error {
-	color: red;
+    color: red;
+    display: none;
 }
 
 
@@ -36,6 +41,53 @@ body{
 .form-signin-wrapper {
 	color: rgb(73, 73, 73);
 }
+
+
+
+#message {
+	display:none;
+	position: relative;
+	padding: 10px;
+}
+
+#message p {
+	padding: 0px 35px;
+}	
+.valid {
+	color: green;
+}
+.valid:before {
+	position: relative;
+	left: -35px;
+	content: "✔";
+}
+.invalid {
+	color: red;
+}
+.invalid:before {
+	position: relative;
+	left: -35px;
+	content: "✖";
+}
+
+
+/* --------------------------- */
+
+
+/* ---------------------------- */
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 @media (min-width: 576px) {

@@ -8,6 +8,7 @@
 
 {% block body %}
 
+
 <div class="distance"></div>
 
 
@@ -33,4 +34,14 @@
 
 {% endblock body %}
 
-{% block js %}{% endblock js %}
+{% block js %}
+    <script>
+        var crf_token = "{{ csrf_token }}";
+        var login_url = {% url 'login_handler' %};
+        var sign_up_url = {% url 'sign_up_handler' %};
+        var forgot_password_url = {% url 'password_reset' %};
+
+        
+    </script>
+    <script src="{% static 'home/js/home.js' %}"></script>
+{% endblock js %}
