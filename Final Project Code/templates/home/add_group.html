@@ -58,6 +58,27 @@
                             </button>
                         </div>
                     </div>
+                    <div class="row">
+                        <div class="col">
+                            <div class="dropdown">
+								<button class="btn btn-primary dropdown-toggle" type="button" id="show_groups_invites"
+									data-bs-toggle="dropdown" aria-expanded="false">
+									Show Group Invites
+								</button>
+								<ul class="dropdown-menu" aria-labelledby="show_groups_invites">
+									{% for activity_object in group_invites %}
+									<li>
+										<div class="dropdown-item group_invites_target" id="{{ activity_object.group_id.id }}">
+                                            {{ activity_object.group_id.group_name }}
+                                            <button type="button" class="btn btn-primary">Accept</button>
+											<button type="button" class="btn btn-primary">Reject</button>
+                                        </div>
+									</li>
+									{% endfor %}
+								</ul>
+							</div>
+                        </div>
+                    </div>
 
                 </div>
             </div>

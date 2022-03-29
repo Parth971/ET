@@ -26,6 +26,7 @@ class Group_Membership(models.Model):
 
 class Bill(models.Model):
     bill_name = models.CharField(max_length=20, default='bill-name')
+    group_id = models.ForeignKey(Group, on_delete=models.CASCADE, default=None)
     amount = models.IntegerField()
     split_type = models.CharField(max_length=20, default='EQUAL')
     date = models.DateTimeField()

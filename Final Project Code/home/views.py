@@ -28,46 +28,6 @@ from django.utils.encoding import force_bytes
 
 
 # helper funtions
-def check(email):
-    regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
-    if(re.fullmatch(regex, email)):
-        return 1
-    return 0
-
-def password_check(passwd):
-      
-    SpecialSym =['$', '@', '#', '%']
-    val = True
-      
-    if len(passwd) < 6:
-        print('length should be at least 6')
-        val = False
-          
-    if len(passwd) > 20:
-        print('length should be not be greater than 8')
-        val = False
-          
-    if not any(char.isdigit() for char in passwd):
-        print('Password should have at least one numeral')
-        val = False
-          
-    if not any(char.isupper() for char in passwd):
-        print('Password should have at least one uppercase letter')
-        val = False
-          
-    if not any(char.islower() for char in passwd):
-        print('Password should have at least one lowercase letter')
-        val = False
-          
-    if not any(char in SpecialSym for char in passwd):
-        print('Password should have at least one of the symbols $@#')
-        val = False
-    if val:
-        return val
-
-def is_phone_valid(s):
-    Pattern = re.compile("(0|91)?[7-9][0-9]{9}")
-    return Pattern.match(s)
 
 def get_paid_debts(current_paid_amount, must_pay):
     if current_paid_amount >= must_pay:
@@ -147,6 +107,7 @@ def accept_reject_friend_request(request):
                 'message' : 'Accept request Failed - ' + str(e)
             }
             json_data = json.dumps(data)
+            return json_data
     else:
         try:
             current_activity = Activity.objects.get(id=activity_id)
@@ -191,13 +152,15 @@ def add_expense(request):
         
         d = datetime.strptime(dt, '%Y-%m-%dT%H:%M')
 
-        b = Bill(bill_name=expense_name, status='PENDING', date=d, amount=total_amount, split_type=split_type)
-        b.save()
+        
 
         friend = CustomUser.objects.get(id=friend_id)
 
         friend_row = Friend.objects.filter(Q(friend1=friend, friend2=request.user) | Q(friend1=request.user, friend2=friend))[0]
         grp = friend_row.group_id
+
+        b = Bill(bill_name=expense_name, group_id=grp, status='PENDING', date=d, amount=total_amount, split_type=split_type)
+        b.save()
 
         activity = Activity(user_id=friend, sender_id=request.user, group_id=grp, bill_id=b, message_type='EXPENSE', message=message, status='PENDING', date=datetime.now() )
         activity.save()
@@ -224,7 +187,6 @@ def add_expense(request):
         json_data = json.dumps(data)
 
     return json_data
-
 
 def get_bills_of_my_friend(request):
     
@@ -382,45 +344,47 @@ def add_new_group(request):
 
         # check if group with this members already exists or not 
 
-        my_groups = Group_Membership.objects.filter(user_id=request.user).values_list('group_id', flat=True)
+        # my_groups = Group_Membership.objects.filter(user_id=request.user).values_list('group_id', flat=True)
         # 2 -> 43 45 46
         # 1 -> 43 45
         # 5 -> 43 46 
 
-        temp_members = mem_list + [request.user.id]
+        # temp_members = mem_list + [request.user.id]
         # print('temp_members', temp_members)
         # print('my_groups', my_groups)
-        for m_grp in my_groups:
+        # for m_grp in my_groups:
             # print(m_grp)
-            g = Group_Membership.objects.filter(group_id_id=m_grp).values_list('user_id', flat=True)
-            if sorted(list(g)) == sorted(temp_members):
+            # g = Group_Membership.objects.filter(group_id_id=m_grp).values_list('user_id', flat=True)
+            # if sorted(list(g)) == sorted(temp_members):
                 # grp already exists 
-                data = {
-                    'message' : 'Group already exists.',
-                    'status': 'Failed'
-                }
-                json_data = json.dumps(data)
-                break
-        else:
-            grp = Group(group_name=grp_name, status='ACTIVE', date=datetime.now())
-            grp.save()
-            
-            bulk_gms = [Group_Membership(user_id_id=id, group_id=grp) for id in mem_list]
-            bulk_gms.append(Group_Membership(user_id_id=request.user.id, group_id=grp))
-            Group_Membership.objects.bulk_create(bulk_gms)
-            
-            notifications = [Activity(user_id_id=m_id, sender_id=request.user, group_id=grp, message_type='GROUP_CREATED', message='You have been added.', status='ACTIVE', date=datetime.now()) for m_id in mem_list]
-            Activity.objects.bulk_create(notifications)
+                # data = {
+                #     'message' : 'Group already exists.',
+                #     'status': 'Failed'
+                # }
+                # json_data = json.dumps(data)
+                # break
+        # else:
+        grp = Group(group_name=grp_name, status='ACTIVE', date=datetime.now())
+        grp.save()
+        my_gm = Group_Membership(user_id_id=request.user.id, group_id=grp)
+        my_gm.save()
+        
+        # bulk_gms = [Group_Membership(user_id_id=id, group_id=grp) for id in mem_list]
+        # bulk_gms.append(Group_Membership(user_id_id=request.user.id, group_id=grp))
+        # Group_Membership.objects.bulk_create(bulk_gms)
+        
+        notifications = [Activity(user_id_id=m_id, sender_id=request.user, group_id=grp, message_type='GROUP_INVITE', message='ACCEPT AND JOIN GROUP.', status='PENDING', date=datetime.now()) for m_id in mem_list]
+        Activity.objects.bulk_create(notifications)
 
-            data = {
-                'message' : 'Group Created.',
-                'status': 'Success'
-            }
-            json_data = json.dumps(data)
+        data = {
+            'message' : 'Group Invite sent.',
+            'status': 'Success'
+        }
+        json_data = json.dumps(data)
 
     except IntegrityError as e:
         data = {
-            'message' : 'Group not Created due to ' + str(e),
+            'message' : 'Group Invite failed due to ' + str(e),
             'status': 'Failed'
         }
         json_data = json.dumps(data)
@@ -432,6 +396,13 @@ def get_grp_details(request):
 
     grp_id = int(request.POST.get('group_id'))
 
+    grp_members = Group_Membership.objects.select_related('user_id', 'group_id').filter(group_id_id=grp_id).values_list('user_id__id', 'user_id__username', 'group_id_id', 'group_id__group_name')
+    print(grp_members)
+
+    print(grp_id)
+    grp_settlements = Settlement.objects.select_related('user_id', 'group_id', 'bill_id').filter(user_id=request.user, group_id_id=grp_id).values('user_id__id', 'user_id__username', 'group_id_id', 'group_id__group_name', 'bill_id__id', 'bill_id__bill_name', 'bill_id__amount', 'bill_id__split_type', 'bill_id__date', 'bill_id__status', 'paid', 'must_pay', 'debt', 'bill_id__amount')    
+
+
 
     data = {
         'message' : 'testing '
@@ -439,7 +410,6 @@ def get_grp_details(request):
     json_data = json.dumps(data)
 
     return json_data
-
 
 def add_group_expense(request):
 
@@ -459,7 +429,10 @@ def add_group_expense(request):
     try:
         d = datetime.strptime(dt, '%Y-%m-%dT%H:%M')
 
-        b = Bill(bill_name=expense_name, status='PENDING', date=d, amount=total_amount, split_type=split_type)
+        bill_status = 'PENDING'
+        if not members:
+            bill_status = 'SETTLED'
+        b = Bill(bill_name=expense_name, group_id_id=group_id, status=bill_status, date=d, amount=total_amount, split_type=split_type)
         b.save()
         
         act_bulk = [Activity(user_id_id=int(mem), sender_id=request.user, group_id_id=group_id, bill_id=b, message_type='EXPENSE', message=message, status='PENDING', date=datetime.now()) for mem in members if int(mem) != request.user.id]
@@ -473,11 +446,12 @@ def add_group_expense(request):
                 remains += amount-int(amount)
                 
             for mem_id in member_must_pay_amount_dic:
+                if remains == 0:
+                    break
                 if member_must_pay_amount_dic[mem_id] != 0:
                     member_must_pay_amount_dic[mem_id] += 1
                     remains -= 1
-                if remains == 0:
-                    break
+                
                 
         settles =[]
         for member in members:
@@ -498,12 +472,51 @@ def add_group_expense(request):
 
     return json_data
 
+def accept_reject_group_invite(request):
+    group_id = request.POST.get('group_id')
+    state = request.POST.get('state')
+
+    print(group_id)
+    print(state)
+    if state == 'Accept':
+        try:
+            current_activity = Activity.objects.get(group_id_id=int(group_id), user_id=request.user, message_type='GROUP_INVITE')
+            current_activity.status = 'ACCEPTED'
+            current_activity.save()
+
+            my_gm = Group_Membership(user_id_id=request.user.id, group_id_id=int(group_id))
+            my_gm.save()
+
+        except IntegrityError as e:
+            data = {
+                'message' : 'Accept Group invite Failed - ' + str(e)
+            }
+            json_data = json.dumps(data)
+            return json_data
+    else:
+        pass
+        try:
+            current_activity = Activity.objects.get(group_id_id=int(group_id), user_id=request.user, message_type='GROUP_INVITE')
+            current_activity.status = 'REJECTED'
+            current_activity.save()
+        except IntegrityError as e:
+            data = {
+                'message' : 'Reject request Failed - '+str(e)
+            }
+            json_data = json.dumps(data)
+            return json_data
+
+    data = {
+        'message' : state + 'ed Done.'
+    }
+    json_data = json.dumps(data)
+
+    return json_data
+
+
 
 # Create your views here.
-
 def home(request):
-    
-
     if request.user.is_authenticated:
         return redirect('dashboard')
 
@@ -566,7 +579,37 @@ def logout_handler(request):
 def dashboard(request):
     if not request.user.is_authenticated:
         return redirect('home')
-    return render(request, 'home/dashboard.html')
+
+
+    # All Friends List 
+    friends_list = []
+
+    all_friends1 = Friend.objects.filter(friend1=request.user, status='ACTIVE')
+    for i in all_friends1:
+        friends_list.append(i.friend2)
+
+    all_friends2 = Friend.objects.filter(friend2=request.user, status='ACTIVE')
+    for i in all_friends2:
+        friends_list.append(i.friend1)
+
+    # All Groups List 
+    groups_list = my_groups = Group_Membership.objects.select_related('group_id').filter(user_id=request.user, group_id__status='ACTIVE').values_list('group_id_id', 'group_id__group_name')
+    groups_list = list(groups_list)
+
+    # friends_list = []
+    # groups_list = []
+    all_expenses_list = []
+    debts_list = []
+    recent_activity = []
+
+    context = {
+        'friends_list': friends_list,
+        'groups_list': groups_list,
+        'all_expenses_list': all_expenses_list,
+        'debts_list': debts_list,
+        'recent_activity': recent_activity
+    }
+    return render(request, 'home/dashboard.html', context)
     
 
 def add_friend(request):
@@ -668,6 +711,10 @@ def add_group(request):
     if request.method == 'POST' and request.POST.get('request_motive') == 'add_group_expense':
         json_data = add_group_expense(request)
         return HttpResponse(json_data, content_type="application/json")
+
+    if request.method == 'POST' and request.POST.get('request_motive') == 'accept_reject_group_invite':
+        json_data = accept_reject_group_invite(request)
+        return HttpResponse(json_data, content_type="application/json")
     
     
     # current friends
@@ -682,17 +729,21 @@ def add_group(request):
         all_friends.append(i.friend1)
 
     # current groups 
-    my_groups = Group_Membership.objects.select_related('group_id').filter(user_id=request.user).values_list('group_id_id', 'group_id__group_name')
+    my_groups = Group_Membership.objects.select_related('group_id').filter(user_id=request.user, group_id__status='ACTIVE').values_list('group_id_id', 'group_id__group_name')
 
     groups_members = {gid:list(Group_Membership.objects.filter(group_id=gid).values_list('user_id', 'user_id__username')) for gid, g_name in my_groups}
 
-    print(my_groups)
-    print(groups_members)
+    # group_invites
+    group_invites = Activity.objects.filter(user_id_id=request.user.id, message_type='GROUP_INVITE', status='PENDING')
+    # print(group_invites)
+
+
 
     context = {
         'all_friends': all_friends,
         'my_groups': list(my_groups),
-        'groups_members': json.dumps(groups_members)
+        'groups_members': json.dumps(groups_members),
+        'group_invites': group_invites
     }
     return render(request, 'home/add_group.html', context)
 

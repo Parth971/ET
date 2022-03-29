@@ -459,4 +459,32 @@ $(document).ready(function () {
 
     });
 
+
+    $('.group_invites_target button').click(function () {
+        let state = $(this).text();
+        let current_id = $(this).parent()[0].id;
+
+        console.log(state);
+        console.log(current_id);
+
+
+        $.ajax({
+            url: url,
+            data: {
+                csrfmiddlewaretoken: crf_token,
+                state: "inactive",
+                'request_motive': 'accept_reject_group_invite',
+                'group_id': current_id,
+                'state': state
+            },
+            type: 'post',
+            success: function (result) {
+                console.log(result);
+                $('#' + current_id).remove();
+            },
+            failure: function () {
+                console.log('failed');
+            }
+        });
+    });
 });
