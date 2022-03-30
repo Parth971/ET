@@ -42,6 +42,9 @@ html, body {
 	color: rgb(73, 73, 73);
 }
 
+.form-floating {
+    margin: 10px 0;
+}
 
 
 #message {

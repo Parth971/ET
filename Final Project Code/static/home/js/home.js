@@ -108,18 +108,18 @@ $(document).ready(function () {
 
 
 
-    $('#open_signup').click(function () {
+    $('#open_signup a').click(function () {
         $("#login_modal").modal('hide');
         $("#signup_modal").modal('show');
     });
 
-    $('#open_login').click(function () {
+    $('#open_login a').click(function () {
         $("#login_modal").modal('show');
         $("#signup_modal").modal('hide');
     });
 
 
-    $('#forgot_password').click(function () {
+    $('#forgot_password a').click(function () {
         $("#login_modal").modal('hide');
         $("#forgot_password_modal").modal('show');
     });

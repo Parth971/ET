@@ -3,10 +3,9 @@
 
 {% block title %}DashBoard{% endblock title %}
 
+{% load static %}
 {% block css %}
-<script>
-
-</script>
+<link rel="stylesheet" href="{% static 'home/css/dashboard.css' %}" type="text/css" />
 {% endblock css %}
 
 {% block body %}
@@ -17,13 +16,184 @@
 
 <!-- add friend -->
 <br>
-<a href="{% url 'add_friend' %}"><button type="button" class="btn btn-light">Friend</button></a>
+<!-- <a href="{% url 'add_friend' %}"><button type="button" class="btn btn-light">Friend</button></a> -->
 <!-- add group -->
-<a href="{% url 'add_group' %}"><button type="button" class="btn btn-light">Group</button></a>
+<!-- <a href="{% url 'add_group' %}"><button type="button" class="btn btn-light">Group</button></a> -->
+
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="side_bar">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col">
+                            <div class="side_bar_row side_bar_row_clicked" id="dashboard_side_bar">
+                                <i class="fa-solid fa-chart-line"></i>
+                                <span>Dashboard</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <div class="side_bar_row" id="activity_side_bar">
+                                <i class="fa-solid fa-flag"></i>
+                                <span>Activity</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <div class="side_bar_row" id="all_expense_side_bar">
+                                <i class="fa-solid fa-list"></i>
+                                <span>All Expenses</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <div class="side_bar_row side_bar_label text-center">
+                                <span>Groups</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <div class="side_bar_row add_icon_wrapper text-center">
+                                <i class="fa-solid fa-circle-plus"></i>
+                                <span>Add Group</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- for loop  -->
+                    <div class="row">
+                        <div class="col">
+                            <div class="group_name_list_wrapper">
+                                <div class="side_bar_row group_name_list">
+                                    <i class="fa-solid fa-tag"></i>
+                                    <span>Group Name</span>
+                                </div>
+                                <div class="side_bar_row group_name_list">
+                                    <i class="fa-solid fa-tag"></i>
+                                    <span>Group Name</span>
+                                </div>
+                                <div class="side_bar_row group_name_list">
+                                    <i class="fa-solid fa-tag"></i>
+                                    <span>Group Name</span>
+                                </div>
+                                <div class="side_bar_row group_name_list">
+                                    <i class="fa-solid fa-tag"></i>
+                                    <span>Group Name</span>
+                                </div>
+                                <div class="side_bar_row group_name_list">
+                                    <i class="fa-solid fa-tag"></i>
+                                    <span>Group Name</span>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <div class="side_bar_row side_bar_label text-center">
+                                <span>Friends</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <div class="side_bar_row add_icon_wrapper text-center">
+                                <i class="fa-solid fa-circle-plus"></i>
+                                <span>Add Friend</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- for loop  -->
+                    <div class="row">
+                        <div class="col">
+                            <div class="group_name_list_wrapper">
+                                <div class="side_bar_row group_name_list">
+                                    <i class="fa-solid fa-user-check"></i>
+                                    <span>Friend Name</span>
+                                </div>
+                                <div class="side_bar_row group_name_list">
+                                    <i class="fa-solid fa-user-check"></i>
+                                    <span>Friend Name</span>
+                                </div>
+                                <div class="side_bar_row group_name_list">
+                                    <i class="fa-solid fa-user-check"></i>
+                                    <span>Friend Name</span>
+                                </div>
+                                <div class="side_bar_row group_name_list">
+                                    <i class="fa-solid fa-user-check"></i>
+                                    <span>Friend Name</span>
+                                </div>
+                                <div class="side_bar_row group_name_list">
+                                    <i class="fa-solid fa-user-check"></i>
+                                    <span>Friend Name</span>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+
+
+                </div>
+            </div>
+        </div>
+        <div class="col-md-9">
+            <div class="row">
+                <div class="col">
+                    <div class="dashboard_wrapper">
+                        <div class="dashboard_header d-flex">
+                            <div class="heading me-auto">
+                                <button type="button" class="btn btn-primary">Primary</button>
+                            </div>
+                            <div class="btns">
+                                <button type="button" class="btn btn-primary">Primary</button>
+                                <button type="button" class="btn btn-primary">Primary</button>
+                            </div>
+                        </div>
+                        <div class="dashboard_body">
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <div class="activity_wrapper">
+                        <div class="activity_header">
+
+                        </div>
+                        <div class="activity_body">
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <div class="all_expense_wrapper">
+                        <div class="all_expense_header">
+
+                        </div>
+                        <div class="all_expense_body">
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 
 {% endblock body %}
 
 {% block js %}
-
+<script src="{% static 'home/js/dashboard.js' %}"></script>
 
 {% endblock js %}

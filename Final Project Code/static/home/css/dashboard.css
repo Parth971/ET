@@ -1,0 +1,42 @@
+
+
+.side_bar_row {
+    font-size:19px;
+    color: #999;
+    padding: 5px 10px;
+}
+.side_bar_row:hover {
+    /* background-color: gray; */
+    color: rgb(99, 99, 99);
+    cursor: pointer;
+}
+.side_bar_row_clicked {
+    border-left: 5px solid blue;
+    color: blue;
+}
+
+.side_bar_label {
+    background-color: rgb(231, 231, 231);
+    color: rgb(116, 116, 116);
+    font-size: 16px;
+    margin-top: 10px;
+}
+.side_bar_label:hover {
+    cursor: default;
+    border: 0;
+    color: rgb(99, 99, 99);
+}
+.add_icon_wrapper {
+    font-size: 17px;
+}
+.add_icon_wrapper:hover {
+    border: 0;
+    color: rgb(99, 99, 99);
+}
+.group_name_list {
+    font-size: 15px;
+}
+.group_name_list_wrapper {
+    max-height: 100px;
+    overflow-y: scroll;
+}
