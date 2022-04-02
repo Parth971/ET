@@ -1,3 +1,4 @@
+from tokenize import group
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 
@@ -43,95 +44,524 @@ def is_bill_settled(settlements):
     return True
 
 
-# return json_data for add_friends
+# finalized dashboard views
 def invite_friend(request):
-    user_id = request.POST.get('friend_id')
-
-    friend_user = CustomUser.objects.get(id=user_id)
-    current_user = request.user
+    friend_id = int(request.POST.get('friend_id'))
 
     try:
-        group = Group(group_name='Friends', status='PENDING', date=datetime.now() )
-        group.save()
+        if Friend.objects.filter(user_id_id=friend_id, friend_id_id=request.user.id).exists():
+            data = {
+                'message' : 'Already your Friend Invited you.',
+                'status': 'failed'
+            }
+        else:
+            friend, created = Friend.objects.get_or_create(user_id_id=request.user.id, friend_id_id=friend_id, group_id=None, status='PENDING')
 
-        friend_row = Friend(friend1=current_user, friend2=friend_user, group_id=group, status='PENDING')
-        friend_row.save()
+            if created:
+                Activity.objects.create(user_id_id=friend_id, sender_id_id=request.user.id, group_id=None, bill_id=None, message_type='FRIEND_REQUEST', message='HURRY!! ACCEPT MY FRIEND REQUEST', status='PENDING', date=datetime.now())
 
-        
-        activity = Activity(user_id=friend_user, sender_id=current_user, group_id=group, message_type='INVITE',  message='lets join in!!!', status='PENDING', date=datetime.now() )
-
-        activity.save()
-
-        data = {
-            'message' : 'Sent invite'
-        }
-        json_data = json.dumps(data)
-        
+                data = {
+                    'message' : 'Friend request sent.',
+                    'status': 'success'
+                }
+            else:
+                data = {
+                    'message' : 'Friend request was already sent.',
+                    'status': 'failed'
+                }
     except IntegrityError as e:
         data = {
-            'message' : 'Sent invite Failed'+str(e)
+            'message' : 'Friend request failed due to ' + str(e),
+            'status': 'error'          
         }
-        json_data = json.dumps(data)
-        
+
+    json_data = json.dumps(data)
     return json_data
 
 def accept_reject_friend_request(request):
-    activity_id = request.POST.get('activity_id')
-    state = request.POST.get('state')
+    activity_id = int(request.POST.get('activity_id'))
+    status = request.POST.get('status')
+    sender_id = int(request.POST.get('sender_id'))
 
     print(activity_id)
-    print(state)
-    if state == 'Accept':
-        try:
-            current_activity = Activity.objects.get(id=activity_id)
-            current_activity.status = 'ACCEPTED'
-            
-            g_id = current_activity.group_id.id
-            
-            current_group = Group.objects.get(id=g_id)
-            current_group.status = 'ACTIVE'
+    print(status)
+    print(sender_id)
 
-            f1 = current_activity.user_id # this is receiver or current user
-            f2 = current_activity.sender_id # this is sender user 
-                # cur - parth 
-                # user - part - f1
-                # sender - yash - f2
-            friend = Friend.objects.get(friend1=f2, friend2=f1) # first is sender and second is receiver
-            friend.status = 'ACTIVE'
-            friend.save()
+    # check if they are already friend 
+    if Friend.objects.filter(user_id_id=sender_id, friend_id_id=request.user.id, status='ACTIVE').exists():
+        current_activity = Activity.objects.get(id=activity_id)
+        current_activity.status = 'ACTIVE'
+        current_activity.save()
 
-            current_activity.save()
-            current_group.save()
-        except IntegrityError as e:
-            data = {
-                'message' : 'Accept request Failed - ' + str(e)
-            }
-            json_data = json.dumps(data)
-            return json_data
+        data = {
+            'message' : 'THEY ARE ALREADY FRIENDS',
+            'status': 'failed'
+        }
     else:
         try:
-            current_activity = Activity.objects.get(id=activity_id)
-            # current_activity.status = 'REJECTED'
-            # print(current_activity)
-            g_id = current_activity.group_id.id
-            # print(g_id)
-            current_group = Group.objects.get(id=g_id)
-            # print(current_group)
-            current_group.delete()
+            if status == 'Accept':
+                FRIEND_GROUP = Group.objects.create(group_name='FRIEND', status='ACTIVE', date=datetime.now())
+                FRIEND_GROUP.save()
+
+                sender_row = Friend.objects.get(user_id_id=sender_id, friend_id_id=request.user.id)
+                sender_row.status = 'ACTIVE'
+                sender_row.group_id = FRIEND_GROUP
+                sender_row.save()
+
+                current_activity = Activity.objects.get(id=activity_id)
+                current_activity.status='ACTIVE'
+                current_activity.save()
+
+                my_row = Friend.objects.create(user_id_id=request.user.id, friend_id_id=sender_id, status='ACTIVE', group_id=FRIEND_GROUP)
+                my_row.save()
+
+                data = {
+                    'message' : 'Friend request accepted.',
+                    'status': 'success'
+                }
+            else:
+                current_activity = Activity.objects.get(id=activity_id)
+                current_activity.status='REJECTED'
+                current_activity.save()
+
+                sender_row = Friend.objects.filter(user_id_id=sender_id, friend_id_id=request.user.id)
+                sender_row.delete()
+
+                data = {
+                    'message' : 'Friend request rejected',
+                    'status': 'success'
+                }
 
         except IntegrityError as e:
             data = {
-                'message' : 'Reject request Failed - '+str(e)
+                'message' : 'Request Failed due to ' + str(e),
+                'status': 'error'
             }
-            json_data = json.dumps(data)
-            return json_data
-
-    data = {
-        'message' : state + 'ed Done.'
-    }
+        
     json_data = json.dumps(data)
-
     return json_data
+
+def add_new_group(request):
+    try:
+        grp_name = request.POST.get('group_name')
+        mem_list = request.POST.get('member_ids')
+        mem_list = list(map(int, json.loads(mem_list)))
+        
+        grp = Group(group_name=grp_name, status='ACTIVE', date=datetime.now())
+        grp.save()
+        my_gm = Group_Membership(user_id_id=request.user.id, group_id=grp)
+        my_gm.save()
+        
+        
+        notifications = [Activity(user_id_id=m_id, sender_id=request.user, group_id=grp, message_type='GROUP_INVITE', message='ACCEPT AND JOIN GROUP.', status='PENDING', date=datetime.now()) for m_id in mem_list if m_id != request.user.id]
+        
+        Activity.objects.bulk_create(notifications)
+
+        data = {
+            'message' : 'Group Invite sent.',
+            'status': 'success'
+        }
+
+    except IntegrityError as e:
+        data = {
+            'message' : 'Group invite failed due to ' + str(e),
+            'status': 'failed'
+        }
+
+    json_data = json.dumps(data)
+    return json_data
+
+def accept_reject_group_request(request):
+    activity_id = int(request.POST.get('activity_id'))
+    status = request.POST.get('status')
+    group_id = int(request.POST.get('group_id'))
+
+    # check if they are already in group 
+    if Group_Membership.objects.filter(user_id_id=request.user.id, group_id_id=group_id).exists():
+        current_activity = Activity.objects.get(id=activity_id)
+        current_activity.status = 'ACCEPTED'
+        current_activity.save()
+
+        data = {
+            'message' : 'You are already in group.',
+            'status': 'failed'
+        }
+    else:
+        try:
+            if status == 'Accept':
+                gm = Group_Membership.objects.create(user_id_id=request.user.id, group_id_id=group_id)
+                gm.save()
+
+                current_activity = Activity.objects.get(id=activity_id)
+                current_activity.status='ACCEPTED'
+                current_activity.save()
+
+                data = {
+                    'message' : 'Group request accepted.',
+                    'status': 'success'
+                }
+            else:
+                current_activity = Activity.objects.get(id=activity_id)
+                current_activity.status='REJECTED'
+                current_activity.save()
+
+                data = {
+                    'message' : 'Group request rejected',
+                    'status': 'success'
+                }
+
+        except IntegrityError as e:
+            data = {
+                'message' : 'Request Failed due to ' + str(e),
+                'status': 'error'
+            }
+        
+    json_data = json.dumps(data)
+    return json_data
+
+def add_friend_expense(request):
+    friend_id = int(request.POST.get('friend_id'))
+    friend_expense_name = request.POST.get('friend_expense_name')
+    total_amount = int(request.POST.get('total_amount'))
+    member_payed_amount_dic = json.loads(request.POST.get('member_payed_amount_dic'))
+    member_must_pay_amount_dic = json.loads(request.POST.get('member_must_pay_amount_dic'))
+    split_type = request.POST.get('split_type')
+    dt = request.POST.get('datetime')
+    message = request.POST.get('message')
+    
+    print(friend_id, friend_expense_name, total_amount, member_payed_amount_dic, member_must_pay_amount_dic, split_type, dt, message)
+
+    try:
+        # check if they are friends
+        friend_row = Friend.objects.filter(user_id_id=request.user.id, friend_id_id=friend_id, status='ACTIVE')
+        if friend_row.exists():
+            d = datetime.strptime(dt, '%Y-%m-%dT%H:%M')
+            group_id = friend_row.first().group_id
+
+            bill = Bill(bill_name=friend_expense_name, group_id=group_id, status='PENDING', date=d, amount=total_amount, split_type=split_type)
+            bill.save()
+
+            notification = Activity(user_id_id=friend_id, sender_id_id=request.user.id, group_id=group_id, bill_id=bill, message_type='EXPENSE', message=message, status='PENDING', date=datetime.now() )
+            notification.save()
+
+            if split_type == 'percentage':
+                remains = 0
+                for mem_id in member_must_pay_amount_dic:
+                    amount = total_amount*(member_must_pay_amount_dic[mem_id]/100)
+                    member_must_pay_amount_dic[mem_id] = int(amount)
+                    remains += amount-int(amount)
+                    
+                for mem_id in member_must_pay_amount_dic:
+                    if remains == 0:
+                        break
+                    if member_must_pay_amount_dic[mem_id] != 0:
+                        member_must_pay_amount_dic[mem_id] += 1
+                        remains -= 1
+                
+            members = member_payed_amount_dic.keys()
+            settles =[]
+            for member in members:
+                paid, debt = get_paid_debts(member_payed_amount_dic[member], member_must_pay_amount_dic[member])
+                s = Settlement(user_id_id=int(member), bill_id=bill, group_id=group_id, paid=paid, must_pay=member_must_pay_amount_dic[member], debt=debt)
+                settles.append(s)
+            Settlement.objects.bulk_create(settles)
+
+            data = {
+                'message' : 'Expense sent to your friend for verification.',
+                'status': 'success'
+            }
+
+        else:
+            data = {
+                'message' : 'He\'s not your friend yet',
+                'status': 'failed'
+            }
+    except IntegrityError as e:
+        data = {
+            'message' : 'Expense sending failed due to ' + str(e),
+            'status': 'failed'
+        }
+        
+    json_data = json.dumps(data)
+    return json_data
+
+def add_group_expense(request):
+
+    group_id = int(request.POST.get('group_id'))
+    expense_name = request.POST.get('expense_name')
+    total_amount = int(request.POST.get('total_amount'))
+    member_payed_amount_dic = json.loads(request.POST.get('member_payed_amount_dic'))
+    member_must_pay_amount_dic = json.loads(request.POST.get('member_must_pay_amount_dic'))
+    split_type = request.POST.get('split_type')
+    dt = request.POST.get('datetime')
+    message = request.POST.get('message')
+    
+    print(group_id, expense_name, total_amount, member_payed_amount_dic, member_must_pay_amount_dic, split_type, dt, message)
+
+    members = member_payed_amount_dic.keys()
+
+    try:
+        d = datetime.strptime(dt, '%Y-%m-%dT%H:%M')
+
+        bill_status = 'PENDING'
+        if len(members) == 1:
+            bill_status = 'SETTLED'
+
+        b = Bill(bill_name=expense_name, group_id_id=group_id, status=bill_status, date=d, amount=total_amount, split_type=split_type)
+        b.save()
+        
+        act_bulk = [Activity(user_id_id=int(mem), sender_id=request.user, group_id_id=group_id, bill_id=b, message_type='EXPENSE', message=message, status='PENDING', date=datetime.now()) for mem in members if int(mem) != request.user.id]
+        Activity.objects.bulk_create(act_bulk)
+
+        if split_type == 'percentage':
+            remains = 0
+            for mem_id in member_must_pay_amount_dic:
+                amount = total_amount*(member_must_pay_amount_dic[mem_id]/100)
+                member_must_pay_amount_dic[mem_id] = int(amount)
+                remains += amount-int(amount)
+                
+            for mem_id in member_must_pay_amount_dic:
+                if remains == 0:
+                    break
+                if member_must_pay_amount_dic[mem_id] != 0:
+                    member_must_pay_amount_dic[mem_id] += 1
+                    remains -= 1
+                
+                
+        settles =[]
+        for member in members:
+            paid, debt = get_paid_debts(member_payed_amount_dic[member], member_must_pay_amount_dic[member])
+            s = Settlement(user_id_id=int(member), bill_id=b, group_id_id=group_id, paid=paid, must_pay=member_must_pay_amount_dic[member], debt=debt)
+            settles.append(s)
+        Settlement.objects.bulk_create(settles)
+   
+        data = {
+            'message' : 'Expense sent to your group members for verification.',
+            'status': 'success'
+        }
+    except IntegrityError as e:
+        data = {
+            'message' : 'Expense sending failed due to ' + str(e),
+            'status': 'failed'
+        }
+        
+    json_data = json.dumps(data)
+    return json_data
+
+def accept_reject_group_expense_request(request):
+    activity_id = int(request.POST.get('activity_id'))
+    group_id = int(request.POST.get('group_id'))
+    bill_id = int(request.POST.get('bill_id'))
+    status = request.POST.get('status')
+
+    print(activity_id, group_id, bill_id)
+
+    if Bill.objects.filter(id=bill_id, status='REJECTED').exists():
+        current_activity = Activity.objects.get(id=activity_id)
+        current_activity.status = 'REJECTED'
+        current_activity.save()
+        data = {
+            'message' : 'Expense already rejected',
+            'status': 'failed'
+        }
+    else:
+        try:
+            if status == 'Accept':
+                current_activity = Activity.objects.get(id=activity_id)
+                current_activity.status = 'ACCEPTED'
+                current_activity.save()
+
+                # check if all have accepted expense or not
+                status_of_bill = Activity.objects.filter(group_id_id=group_id, bill_id_id=bill_id).values_list('status', flat=True)
+                if len(set(status_of_bill)) == 1 and status_of_bill[0] == 'ACCEPTED':
+                    bill = Bill.objects.get(id=bill_id)
+                    settlements = Settlement.objects.filter(bill_id=bill)
+                    
+                    if is_bill_settled(settlements):
+                        bill.status = 'SETTLED'
+                    else:
+                        bill.status = 'UNSETTLED'
+                    bill.save()
+
+                data = {
+                    'message' : 'Expense accepted',
+                    'status': 'success'
+                }
+            else:
+                current_activity = Activity.objects.get(id=activity_id)
+                current_activity.status = 'REJECTED'
+                current_activity.save()
+
+
+                bill = Bill.objects.get(id=bill_id)
+                bill.status = 'REJECTED'
+                bill.save()
+
+                data = {
+                    'message' : 'Expense rejected',
+                    'status': 'success'
+                }
+        except IntegrityError as e:
+            data = {
+                'message' : 'Expense ' + status + 'tion ' + 'failed due to ' + str(e),
+                'status': 'failed'
+            }
+        
+    json_data = json.dumps(data)
+    return json_data
+
+def accept_reject_friend_expense_request(request):
+    activity_id = int(request.POST.get('activity_id'))
+    group_id = int(request.POST.get('group_id'))
+    bill_id = int(request.POST.get('bill_id'))
+    status = request.POST.get('status')
+
+    print(activity_id, group_id, bill_id)
+
+    try:
+        if status == 'Accept':
+            current_activity = Activity.objects.get(id=activity_id)
+            current_activity.status = 'ACCEPTED'
+            current_activity.save()
+
+            bill = Bill.objects.get(id=bill_id)
+            settlements = Settlement.objects.filter(bill_id=bill)
+            
+            if is_bill_settled(settlements):
+                bill.status = 'SETTLED'
+            else:
+                bill.status = 'UNSETTLED'
+            bill.save()
+
+            data = {
+                'message' : 'Expense accepted',
+                'status': 'success'
+            }
+        else:
+            current_activity = Activity.objects.get(id=activity_id)
+            current_activity.status = 'REJECTED'
+            current_activity.save()
+
+
+            bill = Bill.objects.get(id=bill_id)
+            bill.status = 'REJECTED'
+            bill.save()
+
+            data = {
+                'message' : 'Expense rejected',
+                'status': 'success'
+            }
+    except IntegrityError as e:
+        data = {
+            'message' : 'Expense ' + status + 'tion ' + 'failed due to ' + str(e),
+            'status': 'failed'
+        }
+        
+        
+    json_data = json.dumps(data)
+    return json_data
+
+def get_friend(request):
+    friend_user_id = int(request.POST.get('friend_user_id'))
+
+    friend = CustomUser.objects.get(id=friend_user_id)
+
+    group_id = Friend.objects.get(user_id_id=request.user.id, friend_id_id=friend_user_id)
+    print(group_id.group_id)
+
+
+    current_group = group_id.group_id
+
+    group_members_name = Friend.objects.select_related('user_id').filter(group_id=current_group).values_list('user_id__username')
+
+    # bills = Bill.objects.filter(group_id=current_group).values()
+
+    # settlements = [list(Settlement.objects.filter(user_id=request.user, group_id=current_group, bill_id=bill['id']).values('user_id_id', 'user_id__username', 'bill_id_id', 'paid', 'debt', 'must_pay')) for bill in bills]
+
+    settlements = Settlement.objects.select_related('bill_id').filter(user_id=request.user, group_id=current_group).values('user_id_id', 'user_id__username', 'bill_id_id', 'paid', 'debt', 'must_pay', 'bill_id__bill_name', 'bill_id__amount', 'bill_id__split_type', 'bill_id__date', 'bill_id__status')
+
+    # zipped_bill_settlements = []
+    # if bills:
+        # zipped_bill_settlements = zip(bills, settlements)
+
+    def myconverter(o):
+        if isinstance(o, datetime):
+            return o.__str__()
+
+    result = {}
+    result['status'] = 'success'
+    result['message'] = 'Group details fetched'
+    result['friend_user_id'] = friend_user_id
+    result['friend_name'] = friend.username
+    result['group_status'] = current_group.status
+    result['group_date'] = current_group.date
+    # result['zipped_bill_settlements'] = list(zipped_bill_settlements)
+    result['total_members'] = len(group_members_name)
+    result['group_members_name'] = list(group_members_name)
+    result['settlements'] = list(settlements)
+
+    print(result)
+    # result = {}
+
+    json_data = json.dumps(result, default = myconverter)
+    return json_data
+
+def get_group(request):
+    group_id = int(request.POST.get('group_id'))
+
+
+    current_group = Group.objects.get(id=group_id)
+
+    group_members_name = Group_Membership.objects.select_related('user_id').filter(group_id=current_group).values_list('user_id__username')
+
+    # bills = Bill.objects.filter(group_id=current_group).values()
+
+    # settlements = [list(Settlement.objects.filter(user_id=request.user, group_id=current_group, bill_id=bill['id']).values('user_id_id', 'user_id__username', 'bill_id_id', 'paid', 'debt', 'must_pay')) for bill in bills]
+
+
+    settlements = Settlement.objects.select_related('bill_id').filter(user_id=request.user, group_id=current_group).values('user_id_id', 'user_id__username', 'bill_id_id', 'paid', 'debt', 'must_pay', 'bill_id__bill_name', 'bill_id__amount', 'bill_id__split_type', 'bill_id__date', 'bill_id__status')
+
+    # print(settlements)
+
+    # zipped_bill_settlements = []
+    # if bills:
+    #     zipped_bill_settlements = zip(bills, settlements)
+
+    def myconverter(o):
+        if isinstance(o, datetime):
+            return o.__str__()
+
+    # print(list(zipped_bill_settlements))
+
+    result = {}
+    result['status'] = 'success'
+    result['message'] = 'Group details fetched'
+    result['group_id'] = group_id
+    result['group_name'] = current_group.group_name
+    result['group_status'] = current_group.status
+    result['group_date'] = current_group.date
+    # result['zipped_bill_settlements'] = list(zipped_bill_settlements)
+    result['total_members'] = len(group_members_name)
+    result['group_members_name'] = list(group_members_name)
+    result['settlements'] = list(settlements)
+
+    print(list(settlements))
+    # print(result)
+
+
+    json_data = json.dumps(result, default = myconverter)
+    return json_data
+
+
+
+
+
+
+
+
+
+
+
 
 def add_expense(request):
     friend_id = request.POST.get('friend_id')
@@ -329,67 +759,7 @@ def settle_payment(request):
 
 
 # return json_data for add_groups
-def add_new_group(request):
-    try:
-        grp_name = request.POST.get('group_name')
-        mem_list = request.POST.get('member_ids')
-        mem_list = list(map(int, json.loads(mem_list)))
-        # 4
-        # [1,2,3,4]
-        # print(request.user.id)
-        # mem_list.append(request.user.id)
 
-        # t = Group_Membership.objects.filter(user_id__in=mem_list).exists()
-        # print(t)
-
-        # check if group with this members already exists or not 
-
-        # my_groups = Group_Membership.objects.filter(user_id=request.user).values_list('group_id', flat=True)
-        # 2 -> 43 45 46
-        # 1 -> 43 45
-        # 5 -> 43 46 
-
-        # temp_members = mem_list + [request.user.id]
-        # print('temp_members', temp_members)
-        # print('my_groups', my_groups)
-        # for m_grp in my_groups:
-            # print(m_grp)
-            # g = Group_Membership.objects.filter(group_id_id=m_grp).values_list('user_id', flat=True)
-            # if sorted(list(g)) == sorted(temp_members):
-                # grp already exists 
-                # data = {
-                #     'message' : 'Group already exists.',
-                #     'status': 'Failed'
-                # }
-                # json_data = json.dumps(data)
-                # break
-        # else:
-        grp = Group(group_name=grp_name, status='ACTIVE', date=datetime.now())
-        grp.save()
-        my_gm = Group_Membership(user_id_id=request.user.id, group_id=grp)
-        my_gm.save()
-        
-        # bulk_gms = [Group_Membership(user_id_id=id, group_id=grp) for id in mem_list]
-        # bulk_gms.append(Group_Membership(user_id_id=request.user.id, group_id=grp))
-        # Group_Membership.objects.bulk_create(bulk_gms)
-        
-        notifications = [Activity(user_id_id=m_id, sender_id=request.user, group_id=grp, message_type='GROUP_INVITE', message='ACCEPT AND JOIN GROUP.', status='PENDING', date=datetime.now()) for m_id in mem_list]
-        Activity.objects.bulk_create(notifications)
-
-        data = {
-            'message' : 'Group Invite sent.',
-            'status': 'Success'
-        }
-        json_data = json.dumps(data)
-
-    except IntegrityError as e:
-        data = {
-            'message' : 'Group Invite failed due to ' + str(e),
-            'status': 'Failed'
-        }
-        json_data = json.dumps(data)
-
-    return json_data
 
 # hold till add expense done 
 def get_grp_details(request):
@@ -411,66 +781,7 @@ def get_grp_details(request):
 
     return json_data
 
-def add_group_expense(request):
 
-    group_id = int(request.POST.get('group_id'))
-    expense_name = request.POST.get('expense_name')
-    total_amount = int(request.POST.get('total_amount'))
-    member_payed_amount_dic = json.loads(request.POST.get('member_payed_amount_dic'))
-    member_must_pay_amount_dic = json.loads(request.POST.get('member_must_pay_amount_dic'))
-    split_type = request.POST.get('split_type')
-    dt = request.POST.get('datetime')
-    message = request.POST.get('message')
-    
-    print(group_id, expense_name, total_amount, member_payed_amount_dic, member_must_pay_amount_dic, split_type, dt, message)
-
-    members = member_payed_amount_dic.keys()
-
-    try:
-        d = datetime.strptime(dt, '%Y-%m-%dT%H:%M')
-
-        bill_status = 'PENDING'
-        if not members:
-            bill_status = 'SETTLED'
-        b = Bill(bill_name=expense_name, group_id_id=group_id, status=bill_status, date=d, amount=total_amount, split_type=split_type)
-        b.save()
-        
-        act_bulk = [Activity(user_id_id=int(mem), sender_id=request.user, group_id_id=group_id, bill_id=b, message_type='EXPENSE', message=message, status='PENDING', date=datetime.now()) for mem in members if int(mem) != request.user.id]
-        Activity.objects.bulk_create(act_bulk)
-
-        if split_type == 'percentage':
-            remains = 0
-            for mem_id in member_must_pay_amount_dic:
-                amount = total_amount*(member_must_pay_amount_dic[mem_id]/100)
-                member_must_pay_amount_dic[mem_id] = int(amount)
-                remains += amount-int(amount)
-                
-            for mem_id in member_must_pay_amount_dic:
-                if remains == 0:
-                    break
-                if member_must_pay_amount_dic[mem_id] != 0:
-                    member_must_pay_amount_dic[mem_id] += 1
-                    remains -= 1
-                
-                
-        settles =[]
-        for member in members:
-            paid, debt = get_paid_debts(member_payed_amount_dic[member], member_must_pay_amount_dic[member])
-            s = Settlement(user_id_id=int(member), bill_id=b, group_id_id=group_id, paid=paid, must_pay=member_must_pay_amount_dic[member], debt=debt)
-            settles.append(s)
-        Settlement.objects.bulk_create(settles)
-   
-        data = {
-            'message' : 'Sent Expense'
-        }
-        json_data = json.dumps(data) 
-    except IntegrityError as e:
-        data = {
-            'message' : 'Sent Expense Failed - ' + str(e)
-        }
-        json_data = json.dumps(data)
-
-    return json_data
 
 def accept_reject_group_invite(request):
     group_id = request.POST.get('group_id')
@@ -580,34 +891,104 @@ def dashboard(request):
     if not request.user.is_authenticated:
         return redirect('home')
 
+    if request.method == 'POST' and request.POST.get('request_motive') == 'invite_friend':
+        json_data = invite_friend(request)
+        return HttpResponse(json_data, content_type="application/json")
 
-    # All Friends List 
-    friends_list = []
+    if request.method == 'POST' and request.POST.get('request_motive') == 'accept_reject_friend_request':
+        json_data = accept_reject_friend_request(request)
+        return HttpResponse(json_data, content_type="application/json")
 
-    all_friends1 = Friend.objects.filter(friend1=request.user, status='ACTIVE')
-    for i in all_friends1:
-        friends_list.append(i.friend2)
+    if request.method == 'POST' and request.POST.get('request_motive') == 'invite_for_new_group':
+        json_data = add_new_group(request)
+        return HttpResponse(json_data, content_type="application/json")
 
-    all_friends2 = Friend.objects.filter(friend2=request.user, status='ACTIVE')
-    for i in all_friends2:
-        friends_list.append(i.friend1)
+    if request.method == 'POST' and request.POST.get('request_motive') == 'accept_reject_group_request':
+        json_data = accept_reject_group_request(request)
+        return HttpResponse(json_data, content_type="application/json")
+
+    if request.method == 'POST' and request.POST.get('request_motive') == 'add_friend_expense':
+        json_data = add_friend_expense(request)
+        return HttpResponse(json_data, content_type="application/json")
+
+    if request.method == 'POST' and request.POST.get('request_motive') == 'add_group_expense':
+        json_data = add_group_expense(request)
+        return HttpResponse(json_data, content_type="application/json")
+
+    if request.method == 'POST' and request.POST.get('request_motive') == 'accept_reject_group_expense_request':
+        json_data = accept_reject_group_expense_request(request)
+        return HttpResponse(json_data, content_type="application/json")
+
+    if request.method == 'POST' and request.POST.get('request_motive') == 'accept_reject_friend_expense_request':
+        json_data = accept_reject_friend_expense_request(request)
+        return HttpResponse(json_data, content_type="application/json")
+
+    if request.method == 'POST' and request.POST.get('request_motive') == 'get_group':
+        json_data = get_group(request)
+        return HttpResponse(json_data, content_type="application/json")
+
+    if request.method == 'POST' and request.POST.get('request_motive') == 'get_friend':
+        json_data = get_friend(request)
+        return HttpResponse(json_data, content_type="application/json")
+
 
     # All Groups List 
     groups_list = my_groups = Group_Membership.objects.select_related('group_id').filter(user_id=request.user, group_id__status='ACTIVE').values_list('group_id_id', 'group_id__group_name')
     groups_list = list(groups_list)
 
-    # friends_list = []
-    # groups_list = []
+    # friend invites
+    friend_invites = Activity.objects.select_related('sender_id').filter(user_id_id=request.user.id, message_type='FRIEND_REQUEST', status='PENDING').values('id', 'sender_id', 'sender_id__username')
+
+    # All Users who is not friend
+    my_friends = Friend.objects.filter(user_id_id=request.user.id, status='ACTIVE').values('friend_id__id')
+    not_friend_users = CustomUser.objects.filter(~Q(id=request.user.id), ~Q(id__in=my_friends)).values('id', 'username')
+
+    # All my friends
+    friends_list = Friend.objects.filter(user_id_id=request.user.id, status='ACTIVE').values('friend_id__id', 'friend_id__username')
+
+    # All my groups 
+    my_groups = Group_Membership.objects.select_related('group_id').filter(user_id=request.user, group_id__status='ACTIVE').values_list('group_id_id', 'group_id__group_name')
+
+    groups_members = {gid:list(Group_Membership.objects.filter(group_id=gid).values_list('user_id', 'user_id__username')) for gid, g_name in my_groups}
+
+    # group invites
+    group_invites = Activity.objects.select_related('group_id').filter(user_id_id=request.user.id, message_type='GROUP_INVITE', status='PENDING').values('id', 'group_id__id', 'group_id__group_name')
+
+    # group expense verification notification
+    group_expense_requests = Activity.objects.select_related('group_id', 'bill_id').filter(~Q(group_id__group_name='FRIEND'), user_id_id=request.user.id, message_type='EXPENSE', status='PENDING').values('id','message', 'group_id__id','group_id__group_name', 'bill_id__id', 'date', 'sender_id__username', 'bill_id__bill_name', 'bill_id__amount', 'bill_id__split_type', 'bill_id__date')
+    all_settles = [Settlement.objects.filter(user_id_id=request.user.id, group_id=group_expense_requests[index]['group_id__id'], bill_id=group_expense_requests[index]['bill_id__id']).values('paid', 'debt', 'must_pay').first() for index in range(len(group_expense_requests))]
+
+    zipped_group_expense_requests = []
+    if group_expense_requests:
+        zipped_group_expense_requests = zip(group_expense_requests, all_settles)
+    
+
+    # friend expense verification notification
+    friend_expense_requests = Activity.objects.select_related('group_id', 'bill_id').filter(group_id__group_name='FRIEND', user_id_id=request.user.id, message_type='EXPENSE', status='PENDING').values('id','message', 'group_id__id','group_id__group_name', 'bill_id__id', 'date', 'sender_id__username', 'bill_id__bill_name', 'bill_id__amount', 'bill_id__split_type', 'bill_id__date')
+    all_settles = [Settlement.objects.filter(user_id_id=request.user.id, group_id=friend_expense_requests[index]['group_id__id'], bill_id=friend_expense_requests[index]['bill_id__id']).values('paid', 'debt', 'must_pay').first() for index in range(len(friend_expense_requests))]
+
+    zipped_friend_expense_requests = []
+    if friend_expense_requests:
+        zipped_friend_expense_requests = zip(friend_expense_requests, all_settles)
+
     all_expenses_list = []
     debts_list = []
     recent_activity = []
-
+    
     context = {
         'friends_list': friends_list,
         'groups_list': groups_list,
-        'all_expenses_list': all_expenses_list,
-        'debts_list': debts_list,
-        'recent_activity': recent_activity
+        # 'all_expenses_list': all_expenses_list,
+        # 'debts_list': debts_list,
+        # 'recent_activity': recent_activity,
+        'not_friend_users': not_friend_users,
+        'friend_invites': friend_invites,
+        'groups_members': json.dumps(groups_members),
+        'group_invites': group_invites,
+        # 'group_expense_requests': group_expense_requests, # this and below 1 is for showing group expense request verification
+        # 'all_settles': all_settles
+        'zipped_group_expense_requests': zipped_group_expense_requests,
+        'zipped_friend_expense_requests': zipped_friend_expense_requests,
     }
     return render(request, 'home/dashboard.html', context)
     
@@ -616,15 +997,15 @@ def add_friend(request):
     if not request.user.is_authenticated:
         return redirect('home')
     
-    if request.method == 'POST' and request.POST.get('request_motive') == 'send_friend_request':
-        # to invite friend
-        json_data = invite_friend(request)
-        return HttpResponse(json_data, content_type="application/json")
+    # if request.method == 'POST' and request.POST.get('request_motive') == 'send_friend_request':
+    #     # to invite friend
+    #     json_data = invite_friend(request)
+    #     return HttpResponse(json_data, content_type="application/json")
 
-    if request.method == 'POST' and request.POST.get('request_motive') == 'accept_reject_friend_request':
-        # to accept or reject friend request
-        json_data = accept_reject_friend_request(request)
-        return HttpResponse(json_data, content_type="application/json")
+    # if request.method == 'POST' and request.POST.get('request_motive') == 'accept_reject_friend_request':
+    #     # to accept or reject friend request
+    #     json_data = accept_reject_friend_request(request)
+    #     return HttpResponse(json_data, content_type="application/json")
 
     if request.method == 'POST' and request.POST.get('request_motive') == 'add_expense':
         json_data = add_expense(request)

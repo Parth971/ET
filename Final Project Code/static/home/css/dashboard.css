@@ -1,12 +1,15 @@
-
-
 .side_bar_row {
     font-size:19px;
     color: #999;
     padding: 5px 10px;
+    -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+    -khtml-user-select: none; /* Konqueror HTML */
+    -moz-user-select: none; /* Old versions of Firefox */
+    -ms-user-select: none; /* Internet Explorer/Edge */
+    user-select: none; 
 }
 .side_bar_row:hover {
-    /* background-color: gray; */
     color: rgb(99, 99, 99);
     cursor: pointer;
 }
@@ -33,10 +36,117 @@
     border: 0;
     color: rgb(99, 99, 99);
 }
-.group_name_list {
+.group_name_list, .friend_name_list {
     font-size: 15px;
 }
-.group_name_list_wrapper {
+.group_name_list_wrapper, .friends_name_list_wrapper {
     max-height: 100px;
-    overflow-y: scroll;
+    overflow-y: auto;
+}
+
+.dashboard_wrapper, .activity_wrapper, .all_expense_wrapper, .data_box_wrapper {
+    height: 800px;
+    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+}
+
+.dashboard_header, .activity_header, .all_expense_header, .data_box_header {
+    background-color: #e7e7e7;
+}
+.dashboard_header .heading, .activity_header .heading, .all_expense_wrapper .heading, .data_box_wrapper .heading {
+    font-size: 30px;
+    padding: 10px 15px;
+    font-weight: 500;
+    color: #404040;
+}
+.dashboard_header .dashboard_header_btns, .all_expense_header .all_expense_header_btns{
+    margin-bottom: 0;
+    margin-right: 15px;
+}
+
+
+
+.dashboard_body, .activity_body, .all_expense_body, .data_box_body  {
+    height: 90%;
+    overflow: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #6969dd #e0e0e0;
+    padding: 10px 15px;
+}
+.dashboard_body::-webkit-scrollbar, .activity_body::-webkit-scrollbar, .all_expense_body::-webkit-scrollbar, .data_box_body::-webkit-scrollbar {
+    width: 1em;
+}
+.dashboard_body::-webkit-scrollbar-track, .activity_body::-webkit-scrollbar-track, .all_expense_body::-webkit-scrollbar-track, .data_box_body::-webkit-scrollbar-track {
+    box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+}
+.dashboard_body::-webkit-scrollbar-thumb, .activity_body::-webkit-scrollbar-thumb, .all_expense_body::-webkit-scrollbar-thumb, .data_box_body::-webkit-scrollbar-thumb {
+    background-color: darkgrey;
+    border-radius: 10px;
+}
+
+
+
+
+.sms-send-page .pull-left p, .sms-send-page .pull-left h5 {
+    color: #5b6773;
+    margin: 0;
+}
+.sms-send-page .list-group-item {
+    padding: 10px;
+    border: 1px solid #e6e8eb;
+    position: relative;
+}
+.sms-send-page .list-group {
+    box-shadow: 0 0 11px #eceeef;
+    /* max-height: 250px; */
+    /* overflow: auto; */
+    margin-bottom: 10px;
+}
+.sms-send-page .list-group-item:first-child {
+    border-top-left-radius: 2px;
+    border-top-right-radius: 2px;
+}
+.sms-send-page .list-group-item:last-child {
+    border-bottom-left-radius: 2px;
+    border-bottom-right-radius: 2px;
+    margin-bottom: 0;
+}
+.sms-send-page .pull-right i {
+    /* font-size: 9px; */
+    /* vertical-align: middle; */
+    margin-left: 10px;
+}
+.sms-send-page .list-group li:first-child {
+    background-color: #e7e7e7;
+}
+
+
+#invite_error, #friend_request_error, #group_request_error, #group_expense_request_error, #friend_expense_request_error {
+    display: none;
+}
+
+.hide-modal {
+    display: none;
+}
+
+.group_modal, .friend_modal {
+    margin-top: 10px;
+}
+
+.alert-dismissible {
+    margin: 10px 10px 10px 0;
+    float: left;
+}
+.validation_error {
+    color: red;
+    display: none;
+}
+
+#add_group_response, #add_friend_expense_response, #add_group_expense_response {
+    display: none;
+    margin-top: 10px;
+}
+
+.expense_request_wrraper table {
+    width: 80%;
 }

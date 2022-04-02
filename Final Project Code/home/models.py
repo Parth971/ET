@@ -17,6 +17,9 @@ class Group(models.Model):
     status = models.CharField(max_length=20, default='PENDING')
     date = models.DateTimeField()
 
+    def __str__(self):
+        return str(self.id) + '. ' + str(self.group_name) + ' -> ' + str(self.status)
+
 class Group_Membership(models.Model):
     user_id = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     group_id = models.ForeignKey(Group, on_delete=models.CASCADE)
@@ -33,7 +36,7 @@ class Bill(models.Model):
     status = models.CharField(max_length=20, default='PENDING')
 
     def __str__(self):
-        return str(self.id) + ' | ' +  str(self.bill_name) + ' | ' + str(self.amount) + ' | ' + str(self.status)
+        return str(self.id) + ' | ' +  str(self.bill_name) + ' | ' + str(self.amount) + ' | ' + str(self.status) + ' | ' + str(self.group_id)
 
 class Settlement(models.Model):
     user_id = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
@@ -49,7 +52,7 @@ class Settlement(models.Model):
 class Activity(models.Model):
     user_id = models.ForeignKey(CustomUser, related_name='CurrentUser', on_delete=models.CASCADE)
     sender_id = models.ForeignKey(CustomUser, related_name='SenderUser', on_delete=models.CASCADE)
-    group_id = models.ForeignKey(Group, on_delete=models.CASCADE)
+    group_id = models.ForeignKey(Group, on_delete=models.CASCADE, null=True, blank=True)
     bill_id = models.ForeignKey(Bill, on_delete=models.CASCADE, blank=True, null=True)
     message_type = models.CharField(max_length=20, default='-')
     message = models.CharField(max_length=100, default='-')
@@ -57,14 +60,14 @@ class Activity(models.Model):
     date = models.DateTimeField()
 
     def __str__(self):
-        return str(self.id) + '. ' + str(self.sender_id) + ' -> ' + str(self.user_id) + ' | ' + str(self.message_type) + ' | ' + str(self.group_id)
+        return str(self.id) + '. ' + str(self.sender_id) + ' -> ' + str(self.user_id) + ' | ' + str(self.message_type) + ' | ' + str(self.group_id) + ' | ' + str(self.status)
 
 
 class Friend(models.Model):
-    friend1 = models.ForeignKey(CustomUser, related_name='Friend1' ,on_delete=models.CASCADE)
-    friend2 = models.ForeignKey(CustomUser, related_name='Friend2' ,on_delete=models.CASCADE)
-    group_id = models.ForeignKey(Group, on_delete=models.CASCADE)
+    user_id = models.ForeignKey(CustomUser, related_name='Current' ,on_delete=models.CASCADE, default=None)
+    friend_id = models.ForeignKey(CustomUser, related_name='Friend' ,on_delete=models.CASCADE, default=None)
+    group_id = models.ForeignKey(Group, on_delete=models.CASCADE, null=True, blank=True)
     status = models.CharField(max_length=20, default='PENDING')
 
     def __str__(self):
-        return str(self.id) + '. ' + str(self.friend1) + ' -> ' + str(self.friend2)
+        return str(self.id) + '. ' + str(self.user_id) + ' -> ' + str(self.friend_id) + ' | ' + str(self.status) + ' | ' + str(self.group_id)

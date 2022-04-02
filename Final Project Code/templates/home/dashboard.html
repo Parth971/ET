@@ -15,13 +15,12 @@
 <!-- get all groups -->
 
 <!-- add friend -->
-<br>
 <!-- <a href="{% url 'add_friend' %}"><button type="button" class="btn btn-light">Friend</button></a> -->
 <!-- add group -->
 <!-- <a href="{% url 'add_group' %}"><button type="button" class="btn btn-light">Group</button></a> -->
 
 
-<div class="container">
+<div class="container my-3">
     <div class="row">
         <div class="col-md-3">
             <div class="side_bar">
@@ -59,7 +58,7 @@
                     </div>
                     <div class="row">
                         <div class="col">
-                            <div class="side_bar_row add_icon_wrapper text-center">
+                            <div class="side_bar_row add_icon_wrapper text-center" id='add_group_btn'>
                                 <i class="fa-solid fa-circle-plus"></i>
                                 <span>Add Group</span>
                             </div>
@@ -69,26 +68,12 @@
                     <div class="row">
                         <div class="col">
                             <div class="group_name_list_wrapper">
-                                <div class="side_bar_row group_name_list">
+                                {% for group_id, group_name in groups_list %}
+                                <div class="side_bar_row group_name_list" id='{{ group_id }}'>
                                     <i class="fa-solid fa-tag"></i>
-                                    <span>Group Name</span>
+                                    <span>{{ group_name }}</span>
                                 </div>
-                                <div class="side_bar_row group_name_list">
-                                    <i class="fa-solid fa-tag"></i>
-                                    <span>Group Name</span>
-                                </div>
-                                <div class="side_bar_row group_name_list">
-                                    <i class="fa-solid fa-tag"></i>
-                                    <span>Group Name</span>
-                                </div>
-                                <div class="side_bar_row group_name_list">
-                                    <i class="fa-solid fa-tag"></i>
-                                    <span>Group Name</span>
-                                </div>
-                                <div class="side_bar_row group_name_list">
-                                    <i class="fa-solid fa-tag"></i>
-                                    <span>Group Name</span>
-                                </div>
+                                {% endfor %}
                             </div>
 
                         </div>
@@ -102,7 +87,7 @@
                     </div>
                     <div class="row">
                         <div class="col">
-                            <div class="side_bar_row add_icon_wrapper text-center">
+                            <div class="side_bar_row add_icon_wrapper text-center" id='add_friend_btn'>
                                 <i class="fa-solid fa-circle-plus"></i>
                                 <span>Add Friend</span>
                             </div>
@@ -111,34 +96,17 @@
                     <!-- for loop  -->
                     <div class="row">
                         <div class="col">
-                            <div class="group_name_list_wrapper">
-                                <div class="side_bar_row group_name_list">
+                            <div class="friends_name_list_wrapper">
+                                {% for friend in friends_list %}
+                                <div class="side_bar_row friend_name_list" id='{{ friend.friend_id__id }}'>
                                     <i class="fa-solid fa-user-check"></i>
-                                    <span>Friend Name</span>
+                                    <span>{{ friend.friend_id__username }}</span>
                                 </div>
-                                <div class="side_bar_row group_name_list">
-                                    <i class="fa-solid fa-user-check"></i>
-                                    <span>Friend Name</span>
-                                </div>
-                                <div class="side_bar_row group_name_list">
-                                    <i class="fa-solid fa-user-check"></i>
-                                    <span>Friend Name</span>
-                                </div>
-                                <div class="side_bar_row group_name_list">
-                                    <i class="fa-solid fa-user-check"></i>
-                                    <span>Friend Name</span>
-                                </div>
-                                <div class="side_bar_row group_name_list">
-                                    <i class="fa-solid fa-user-check"></i>
-                                    <span>Friend Name</span>
-                                </div>
+                                {% endfor %}
                             </div>
 
                         </div>
                     </div>
-
-
-
                 </div>
             </div>
         </div>
@@ -146,13 +114,16 @@
             <div class="row">
                 <div class="col">
                     <div class="dashboard_wrapper">
-                        <div class="dashboard_header d-flex">
+                        <div class="dashboard_header d-flex align-items-center">
                             <div class="heading me-auto">
-                                <button type="button" class="btn btn-primary">Primary</button>
+                                <span>DashBoard</span>
                             </div>
-                            <div class="btns">
-                                <button type="button" class="btn btn-primary">Primary</button>
-                                <button type="button" class="btn btn-primary">Primary</button>
+                            <div class="dashboard_header_btns">
+                                <button type="button" class="btn btn-primary btn-lg" data-bs-toggle="modal"
+                                    data-bs-target="#add_expense_modal">
+                                    Add Expense
+                                </button>
+                                <button type="button" class="btn btn-primary btn-lg">Settle</button>
                             </div>
                         </div>
                         <div class="dashboard_body">
@@ -165,10 +136,261 @@
                 <div class="col">
                     <div class="activity_wrapper">
                         <div class="activity_header">
-
+                            <div class="heading">
+                                <span>Activity</span>
+                            </div>
                         </div>
                         <div class="activity_body">
+                            <div class="invites_wrapper">
+                                <div class="sms-send-page">
+                                    <ul class="list-group">
+                                        <li class="list-group-item d-flex align-items-center">
+                                            <div class="col-xs-8 pull-left me-auto">
+                                                <h5><strong>Friend Requests</strong></h5>
+                                            </div>
+                                        </li>
+                                        {% if friend_invites %}
+                                        {% for activity in friend_invites %}
+                                        <li class="list-group-item d-flex align-items-center accept_reject_friend_invite_target"
+                                            id='{{ activity.id }}_{{ activity.sender_id }}'>
+                                            <div class="col-xs-8 pull-left me-auto">
+                                                <p><strong>{{ activity.sender_id__username }}</strong></p>
+                                            </div>
+                                            <div class="col-xs-4 pull-right">
+                                                <button type="button" class="btn btn-success">Accept<i
+                                                        class="fa-solid fa-check"></i></button>
+                                                <button type="button" class="btn btn-danger">Reject<i
+                                                        class="fa-solid fa-xmark"></i></button>
+                                            </div>
+                                        </li>
+                                        {% endfor %}
+                                        {% else %}
+                                        <li class="list-group-item d-flex align-items-center">
+                                            <div class="col-xs-8 pull-left me-auto">
+                                                <p><strong>No Friend Request</strong></p>
+                                            </div>
+                                        </li>
+                                        {% endif %}
+                                        <li class="list-group-item align-items-center" id='friend_request_error'>
+                                            <div class="col-xs-8 pull-left me-auto">
+                                                <p><strong></strong></p>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                    <ul class="list-group">
+                                        <li class="list-group-item d-flex align-items-center">
+                                            <div class="col-xs-8 pull-left me-auto">
+                                                <h5><strong>Group Requests</strong></h5>
+                                            </div>
+                                        </li>
+                                        {% if group_invites %}
+                                        {% for activity in group_invites %}
+                                        <li class="list-group-item d-flex align-items-center accept_reject_group_invite_target"
+                                            id='{{ activity.id }}_{{ activity.group_id__id }}'>
+                                            <div class="col-xs-8 pull-left me-auto">
+                                                <p><strong>{{ activity.group_id__group_name }}</strong></p>
+                                            </div>
+                                            <div class="col-xs-4 pull-right">
+                                                <button type="button" class="btn btn-success">Accept<i
+                                                        class="fa-solid fa-check"></i></button>
+                                                <button type="button" class="btn btn-danger">Reject<i
+                                                        class="fa-solid fa-xmark"></i></button>
+                                            </div>
+                                        </li>
+                                        {% endfor %}
+                                        {% else %}
+                                        <li class="list-group-item d-flex align-items-center">
+                                            <div class="col-xs-8 pull-left me-auto">
+                                                <p><strong>No Group Request</strong></p>
+                                            </div>
+                                        </li>
+                                        {% endif %}
+                                        <li class="list-group-item align-items-center" id='group_request_error'>
+                                            <div class="col-xs-8 pull-left me-auto">
+                                                <p><strong></strong></p>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="expense_request_wrraper">
+                                <div class="sms-send-page">
+                                    <ul class="list-group">
+                                        <li class="list-group-item d-flex align-items-center">
+                                            <div class="col-xs-8 pull-left me-auto">
+                                                <h5><strong>Group expense requests</strong></h5>
+                                            </div>
+                                        </li>
+                                        {% if zipped_group_expense_requests %}
+                                        {% for activity, all_settles in zipped_group_expense_requests %}
+                                        <li class="list-group-item d-flex align-items-center accept_reject_group_expense_target"
+                                            id='{{ activity.id }}_{{ activity.group_id__id }}_{{ activity.bill_id__id }}'>
+                                            <div class="col-xs-8 pull-left me-auto">
+                                                <p><strong>{{ activity.group_id__group_name }} - {{
+                                                        activity.bill_id__bill_name }}</strong></p>
+                                            </div>
+                                            <div class="col-xs-4 pull-right">
+                                                <button class="btn btn-primary" type="button" data-bs-toggle="collapse"
+                                                    data-bs-target="#billDetail_{{ activity.id }}_{{ activity.group_id__id }}_{{ activity.bill_id__id }}"
+                                                    aria-expanded="false" aria-controls="collapseExample">
+                                                    Bill details<i class="fa-solid fa-arrow-down-short-wide"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-success">Accept<i
+                                                        class="fa-solid fa-check"></i></button>
+                                                <button type="button" class="btn btn-danger">Reject<i
+                                                        class="fa-solid fa-xmark"></i></button>
+                                            </div>
+                                        </li>
+                                        <div class="collapse"
+                                            id="billDetail_{{ activity.id }}_{{ activity.group_id__id }}_{{ activity.bill_id__id }}">
+                                            <div class="card card-body">
+                                                <table class="table table-hover table-bordered">
+                                                    <tbody>
+                                                        <tr>
+                                                            <td scope="col">Bill name</td>
+                                                            <td scope="col">{{ activity.bill_id__bill_name }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td scope="col">Bill created on</td>
+                                                            <td scope="col">{{ activity.bill_id__date }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td scope="col">Bill created by</td>
+                                                            <td scope="col">{{ activity.sender_id__username }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td scope="col">Split type</td>
+                                                            <td scope="col">{{ activity.bill_id__split_type }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td scope="col">Message</td>
+                                                            <td scope="col">{{ activity.message }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td scope="col">Amount Paid by you</td>
+                                                            <td scope="col">{{ all_settles.paid }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td scope="col">Amount on your part</td>
+                                                            <td scope="col">{{ all_settles.must_pay }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td scope="col">Debt amount</td>
+                                                            <td scope="col">{{ all_settles.debt }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td scope="col">Total Amount</td>
+                                                            <td scope="col">{{ activity.bill_id__amount }}</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                        {% else %}
+                                        <li class="list-group-item d-flex align-items-center">
+                                            <div class="col-xs-8 pull-left me-auto">
+                                                <p><strong>No group expense requests</strong></p>
+                                            </div>
+                                        </li>
+                                        {% endif %}
+                                        <li class="list-group-item align-items-center" id='group_expense_request_error'>
+                                            <div class="col-xs-8 pull-left me-auto">
+                                                <p><strong></strong></p>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                    <ul class="list-group">
+                                        <li class="list-group-item d-flex align-items-center">
+                                            <div class="col-xs-8 pull-left me-auto">
+                                                <h5><strong>Friend expense requests</strong></h5>
+                                            </div>
+                                        </li>
+                                        {% if zipped_friend_expense_requests %}
+                                        {% for activity, all_settles in zipped_friend_expense_requests %}
+                                        <li class="list-group-item d-flex align-items-center accept_reject_friend_expense_target"
+                                            id='{{ activity.id }}_{{ activity.group_id__id }}_{{ activity.bill_id__id }}'>
+                                            <div class="col-xs-8 pull-left me-auto">
+                                                <p><strong>{{ activity.sender_id__username }} - {{
+                                                        activity.bill_id__bill_name }}</strong></p>
+                                            </div>
+                                            <div class="col-xs-4 pull-right">
+                                                <button class="btn btn-primary" type="button" data-bs-toggle="collapse"
+                                                    data-bs-target="#billDetail_{{ activity.id }}_{{ activity.group_id__id }}_{{ activity.bill_id__id }}"
+                                                    aria-expanded="false" aria-controls="collapseExample">
+                                                    Bill details<i class="fa-solid fa-arrow-down-short-wide"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-success">Accept<i
+                                                        class="fa-solid fa-check"></i></button>
+                                                <button type="button" class="btn btn-danger">Reject<i
+                                                        class="fa-solid fa-xmark"></i></button>
+                                            </div>
+                                        </li>
+                                        <div class="collapse"
+                                            id="billDetail_{{ activity.id }}_{{ activity.group_id__id }}_{{ activity.bill_id__id }}">
+                                            <div class="card card-body">
+                                                <table class="table table-hover table-bordered">
+                                                    <tbody>
+                                                        <tr>
+                                                            <td scope="col">Bill name</td>
+                                                            <td scope="col">{{ activity.bill_id__bill_name }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td scope="col">Bill created on</td>
+                                                            <td scope="col">{{ activity.bill_id__date }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td scope="col">Bill created by</td>
+                                                            <td scope="col">{{ activity.sender_id__username }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td scope="col">Split type</td>
+                                                            <td scope="col">{{ activity.bill_id__split_type }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td scope="col">Message</td>
+                                                            <td scope="col">{{ activity.message }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td scope="col">Amount Paid by you</td>
+                                                            <td scope="col">{{ all_settles.paid }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td scope="col">Amount on your part</td>
+                                                            <td scope="col">{{ all_settles.must_pay }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td scope="col">Debt amount</td>
+                                                            <td scope="col">{{ all_settles.debt }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td scope="col">Total Amount</td>
+                                                            <td scope="col">{{ activity.bill_id__amount }}</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                        {% else %}
+                                        <li class="list-group-item d-flex align-items-center">
+                                            <div class="col-xs-8 pull-left me-auto">
+                                                <p><strong>No friend expense requests</strong></p>
+                                            </div>
+                                        </li>
+                                        {% endif %}
+                                        <li class="list-group-item align-items-center"
+                                            id='friend_expense_request_error'>
+                                            <div class="col-xs-8 pull-left me-auto">
+                                                <p><strong></strong></p>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="general_activity">
 
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -176,11 +398,34 @@
             <div class="row">
                 <div class="col">
                     <div class="all_expense_wrapper">
-                        <div class="all_expense_header">
-
+                        <div class="all_expense_header d-flex align-items-center">
+                            <div class="heading me-auto">
+                                <span>All Expense</span>
+                            </div>
+                            <div class="all_expense_header_btns">
+                                <button type="button" class="btn btn-primary btn-lg" data-bs-toggle="modal"
+                                    data-bs-target="#add_expense_modal">
+                                    Add Expense
+                                </button>
+                                <button type="button" class="btn btn-primary btn-lg">Settle</button>
+                            </div>
                         </div>
                         <div class="all_expense_body">
 
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <div class="data_box_wrapper">
+                        <div class="data_box_header">
+                            <div class="heading">
+                                <span>Expense</span>
+                            </div>
+                        </div>
+                        <div class="data_box_body">
+                            
                         </div>
                     </div>
                 </div>
@@ -189,11 +434,283 @@
     </div>
 </div>
 
+<!-- Add Friend Modal -->
+<div class="modal fade" id="add_friend_modal" tabindex="-1" aria-labelledby="add_friend_modal_label" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="add_friend_modal_label">Add/Invite for Friends</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="sms-send-page">
+                    <ul class="list-group">
+                        {% if not_friend_users %}
+                        {% for user in not_friend_users %}
+                        <li class="list-group-item d-flex align-items-center not_friend_target" id='{{ user.id }}'>
+                            <div class="col-xs-8 pull-left me-auto">
+                                <p><strong>{{ user.username }}</strong></p>
+                            </div>
+                            <div class="col-xs-4 pull-right">
+                                <button type="button" class="btn btn-success">invite<i class="fa fa-paper-plane-o"
+                                        aria-hidden="true"></i></button>
+                            </div>
+                        </li>
+                        {% endfor %}
+                        {% else %}
+                        <li class="list-group-item d-flex align-items-center">
+                            <div class="col-xs-8 pull-left me-auto">
+                                <p><strong>No Users</strong></p>
+                            </div>
+                        </li>
+                        {% endif %}
+                        <li class="list-group-item align-items-center" id='invite_error'>
+                            <div class="col-xs-8 pull-left me-auto">
+                                <p><strong></strong></p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
+<!-- Add Group Modal -->
+<div class="modal fade" id="add_group_modal" tabindex="-1" aria-labelledby="add_group_modal_label" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="add_group_modal_label">Add Group</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="create_new_group_form">
+                    <div class="mb-3">
+                        <div class="dropdown">
+                            <button class="btn btn-secondary dropdown-toggle" type="button" id="add_friend_to_group"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                                Select members
+                            </button>
+                            <span class="validation_error" id="group_member_number_error">
+                                Group has minimum 3 members.
+                            </span>
+                            <ul class="dropdown-menu" aria-labelledby="add_friend_to_group">
+                                {% for friend in friends_list %}
+                                <li>
+                                    <div class="dropdown-item target_friend" id="{{ friend.friend_id__id }}">
+                                        {{ friend.friend_id__username }}
+                                    </div>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="span_friend_group">
+
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <span class="input-group-text">Group Name</span>
+                        <input type="text" aria-label="group name" id="group_name_input" class="form-control">
+                    </div>
+                    <div class="validation_error" id="group_name_error">
+                        Group name not valid.
+                    </div>
+                </form>
+                <div class="alert" id='add_group_response' role="alert">
+
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="add_group_submit_btn">Add</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Expense Modal -->
+<div class="modal fade" id="add_expense_modal" tabindex="-1" aria-labelledby="add_expense_modal_label"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="add_expense_modal_label">Add Expense</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
+                    <input type="radio" class="btn-check" name="friend_group_radio" id="friend_radio_btn" value="friend"
+                        autocomplete="off" checked>
+                    <label class="btn btn-outline-primary" for="friend_radio_btn">Friend</label>
+
+                    <input type="radio" class="btn-check" name="friend_group_radio" id="group_radio_btn" value="group"
+                        autocomplete="off">
+                    <label class="btn btn-outline-primary" for="group_radio_btn">Group</label>
+                </div>
+
+                <!-- Group tab  -->
+                <div class="group_modal hide-modal">
+                    <form id='expense_form'>
+                        <div class="input-group mb-3">
+                            <label class="input-group-text" for="group_name">With</label>
+                            <select class="form-select" id="group_name">
+                                <option value='0' selected>Choose...</option>
+                                {% for group_id, group_name in groups_list %}
+                                <option value="{{ group_id }}">{{ group_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <input type="text" class="form-control" id="expense_name" value=''
+                                placeholder='Expense Name' name='expense_name'>
+                        </div>
+
+                        <div id="all_grp_members_with_amount_wrapper">
+                            <div class="row">
+
+                            </div>
+                        </div>
+
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" aria-label="total_amount" placeholder='Total Amount'
+                                disabled>
+                            <span class="input-group-text">$</span>
+                            <input type="text" class="form-control" id='total_amount' aria-label="total_amount"
+                                value='0' disabled>
+                            <div class="invalid-feedback" id='amount-zero'>
+                                Amount not filled.
+                            </div>
+                        </div>
+
+                        <div class="input-group mb-3">
+                            <label class="input-group-text" for="inputGroupSelect02">Split Type</label>
+                            <select class="form-select" id="split_type">
+                                <option value='0' selected>Choose...</option>
+                                <option value="equal">Equal</option>
+                                <option value="exact">Exact</option>
+                                <option value="percentage">Percentage</option>
+                            </select>
+                        </div>
+
+
+                        <div id="all_grp_members_with_actual_amount_wrapper">
+                            <div class="row">
+
+                            </div>
+                        </div>
+                        <div class="invalid-feedback" id='total_amount_remaining'>
+                            Total Amount not same.
+                        </div>
+
+                        <div class='input-group mb-3'>
+                            <label class="form-control" for="datetime-local">Date-Time</label>
+                            <input class="form-control" type="datetime-local" id="datetime-local">
+                        </div>
+
+
+                        <div class="mb-3">
+                            <label for="message-text" class="col-form-label">Send Verify notification with
+                                message</label>
+                            <textarea class="form-control" name='message' id="message-text"></textarea>
+                        </div>
+                    </form>
+                    <div class="alert" id='add_group_expense_response' role="alert">
+
+                    </div>
+                </div>
+
+
+                <!-- Friend tab  -->
+                <div class="friend_modal">
+                    <form id='friend_expense_form'>
+                        <div class="input-group mb-3">
+                            <label class="input-group-text" for="friend_name">With</label>
+                            <select class="form-select" id="friend_name">
+                                <option value='0' selected>Choose...</option>
+                                {% for friend in friends_list %}
+                                <option value="{{ friend.friend_id__id }}">{{ friend.friend_id__username }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <input type="text" class="form-control" id="friend_expense_name" value=''
+                                placeholder='Expense Name' name='friend_expense_name'>
+                        </div>
+
+
+                        <div id="all_friend_members_with_amount_wrapper">
+                            <div class="row">
+
+                            </div>
+                        </div>
+
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" aria-label="total_amount" placeholder='Total Amount'
+                                disabled>
+                            <span class="input-group-text">$</span>
+                            <input type="text" class="form-control" id='friend_total_amount' aria-label="total_amount"
+                                value='0' disabled>
+                            <div class="invalid-feedback" id='friend_amount-zero'>
+                                Amount not filled.
+                            </div>
+                        </div>
+
+                        <div class="input-group mb-3">
+                            <label class="input-group-text" for="friend_split_type">Split Type</label>
+                            <select class="form-select" id="friend_split_type">
+                                <option value='0' selected>Choose...</option>
+                                <option value="equal">Equal</option>
+                                <option value="exact">Exact</option>
+                                <option value="percentage">Percentage</option>
+                            </select>
+                        </div>
+
+                        <div id="all_friend_members_with_actual_amount_wrapper">
+                            <div class="row">
+
+                            </div>
+                        </div>
+                        <div class="invalid-feedback" id='friend_total_amount_remaining'>
+                            Total Amount not same.
+                        </div>
+
+                        <div class='input-group mb-3'>
+                            <label class="form-control" for="datetime-local">Date-Time</label>
+                            <input class="form-control" type="datetime-local" id="friend_datetime-local">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="message-text" class="col-form-label">Send Verify notification with
+                                message</label>
+                            <textarea class="form-control" name='message' id="friend_message-text"></textarea>
+                        </div>
+                    </form>
+                    <div class="alert" id='add_friend_expense_response' role="alert">
+
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id='reset_form'>Reset</button>
+                <button type="button" class="btn btn-primary" id='add_expense'>Add expense</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 {% endblock body %}
 
 {% block js %}
+<script>
+
+    var url = '{% url 'dashboard' %}';
+    var crf_token = "{{ csrf_token }}";
+    var current_user_details = [{{ request.user.id }}, '{{ request.user.username }}'];
+    var groups_members = JSON.parse('{{ groups_members|safe }}');
+
+</script>
 <script src="{% static 'home/js/dashboard.js' %}"></script>
 
 {% endblock js %}
