@@ -971,7 +971,15 @@ def dashboard(request):
     if friend_expense_requests:
         zipped_friend_expense_requests = zip(friend_expense_requests, all_settles)
 
-    all_expenses_list = []
+    # all my expenses which are unsettled
+    # for dashboard 
+
+    unsettled_expenses = Settlement.objects.select_related('bill_id', 'group_id').filter(user_id_id=request.user.id, bill_id__status='UNSETTLED').values('user_id_id', 'user_id__username', 'bill_id_id', 'paid', 'debt', 'must_pay', 'bill_id__bill_name', 'bill_id__amount', 'bill_id__split_type', 'bill_id__date', 'bill_id__status', 'group_id__group_name', 'group_id')
+    
+    for i in range(len(unsettled_expenses)):
+        print(i)
+
+    all_expenses_list = []  
     debts_list = []
     recent_activity = []
     
@@ -989,6 +997,7 @@ def dashboard(request):
         # 'all_settles': all_settles
         'zipped_group_expense_requests': zipped_group_expense_requests,
         'zipped_friend_expense_requests': zipped_friend_expense_requests,
+        'unsettled_expenses': unsettled_expenses
     }
     return render(request, 'home/dashboard.html', context)
     
