@@ -9,17 +9,6 @@
 {% endblock css %}
 
 {% block body %}
-
-
-<!-- get all friends group -->
-<!-- get all groups -->
-
-<!-- add friend -->
-<!-- <a href="{% url 'add_friend' %}"><button type="button" class="btn btn-light">Friend</button></a> -->
-<!-- add group -->
-<!-- <a href="{% url 'add_group' %}"><button type="button" class="btn btn-light">Group</button></a> -->
-
-
 <div class="container my-3">
     <div class="row">
         <div class="col-md-3">
@@ -41,14 +30,14 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row">
+                    <!-- <div class="row">
                         <div class="col">
                             <div class="side_bar_row" id="all_expense_side_bar">
                                 <i class="fa-solid fa-list"></i>
                                 <span>All Expenses</span>
                             </div>
                         </div>
-                    </div>
+                    </div> -->
                     <div class="row">
                         <div class="col">
                             <div class="side_bar_row side_bar_label text-center">
@@ -107,6 +96,17 @@
 
                         </div>
                     </div>
+                    <div class="row">
+                        <div class="add_expense_sidebar_button_wrapper">
+                            <div class="side_bar_row">
+                                <button type="button" class="btn btn-success btn-rounded" style="width: 100%;" data-bs-toggle="modal"
+                                    data-bs-target="#add_expense_modal"><i class="fa-solid fa-circle-plus"></i>
+                                    Add Expense
+                                </button>
+                            </div>
+                        </div>
+                        
+                    </div>
                 </div>
             </div>
         </div>
@@ -123,7 +123,7 @@
                                     data-bs-target="#add_expense_modal">
                                     Add Expense
                                 </button>
-                                <button type="button" class="btn btn-primary btn-lg">Settle</button>
+                                <!-- <button type="button" class="btn btn-primary btn-lg">Settle</button> -->
                             </div>
                         </div>
                         <div class="dashboard_body">
@@ -138,7 +138,7 @@
                                         <li class="list-group-item d-flex align-items-center"
                                             id='{{ expense.bill_id_id }}'>
                                             <div class="col-xs-8 pull-left me-auto">
-                                                <p><strong>{{ expense.bill_id__bill_name }}</strong></p>
+                                                <p><strong>{{ expense.bill_id__bill_name }} - {{ expense.group_id__group_name }}</strong></p>
                                             </div>
                                             <div class="col-xs-4 pull-right">
                                                 <button class="btn btn-primary" type="button" data-bs-toggle="collapse"
@@ -175,6 +175,10 @@
                                                         <tr>
                                                             <td scope="col">Debt amount</td>
                                                             <td scope="col">{{ expense.debt }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td scope="col">Lent amount</td>
+                                                            <td scope="col">{{ expense.lent }}</td>
                                                         </tr>
                                                         <tr>
                                                             <td scope="col">Total Amount</td>
@@ -293,8 +297,7 @@
                                         <li class="list-group-item d-flex align-items-center accept_reject_group_expense_target"
                                             id='{{ activity.id }}_{{ activity.group_id__id }}_{{ activity.bill_id__id }}'>
                                             <div class="col-xs-8 pull-left me-auto">
-                                                <p><strong>{{ activity.group_id__group_name }} - {{
-                                                        activity.bill_id__bill_name }}</strong></p>
+                                                <p><strong>{{ activity.group_id__group_name }} - {{ activity.bill_id__bill_name }}</strong></p>
                                             </div>
                                             <div class="col-xs-4 pull-right">
                                                 <button class="btn btn-primary" type="button" data-bs-toggle="collapse"
@@ -378,8 +381,7 @@
                                         <li class="list-group-item d-flex align-items-center accept_reject_friend_expense_target"
                                             id='{{ activity.id }}_{{ activity.group_id__id }}_{{ activity.bill_id__id }}'>
                                             <div class="col-xs-8 pull-left me-auto">
-                                                <p><strong>{{ activity.sender_id__username }} - {{
-                                                        activity.bill_id__bill_name }}</strong></p>
+                                                <p><strong>{{ activity.sender_id__username }} - {{ activity.bill_id__bill_name }}</strong></p>
                                             </div>
                                             <div class="col-xs-4 pull-right">
                                                 <button class="btn btn-primary" type="button" data-bs-toggle="collapse"
@@ -462,7 +464,7 @@
                     </div>
                 </div>
             </div>
-            <div class="row">
+            <!-- <div class="row">
                 <div class="col">
                     <div class="all_expense_wrapper">
                         <div class="all_expense_header d-flex align-items-center">
@@ -482,7 +484,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> -->
             <div class="row">
                 <div class="col">
                     <div class="data_box_wrapper">
@@ -642,7 +644,7 @@
                         <div class="input-group mb-3">
                             <input type="text" class="form-control" aria-label="total_amount" placeholder='Total Amount'
                                 disabled>
-                            <span class="input-group-text">$</span>
+                            <span class="input-group-text">&#8377;</span>
                             <input type="text" class="form-control" id='total_amount' aria-label="total_amount"
                                 value='0' disabled>
                             <div class="invalid-feedback" id='amount-zero'>
@@ -715,7 +717,7 @@
                         <div class="input-group mb-3">
                             <input type="text" class="form-control" aria-label="total_amount" placeholder='Total Amount'
                                 disabled>
-                            <span class="input-group-text">$</span>
+                            <span class="input-group-text">&#8377;</span>
                             <input type="text" class="form-control" id='friend_total_amount' aria-label="total_amount"
                                 value='0' disabled>
                             <div class="invalid-feedback" id='friend_amount-zero'>
@@ -767,6 +769,41 @@
     </div>
 </div>
 
+<!-- Settle Modal -->
+<div class="modal fade" id="settlement_modal" tabindex="-1" aria-labelledby="settlement_modal_label" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="settlement_modal_label">Pay..</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<div class="modal-body">
+				<form>
+					<div class="input-group mb-3">
+						<span class="input-group-text">&#8377;</span>
+						<input type="text" class="form-control" id='settle_payment' value='0'>
+						
+					</div>
+                    <div class="invalid_value_error">
+                        Invalid Value!!!
+                    </div>
+                    <div class="settle_response_message" style="display: none;">
+
+                    </div>
+					<input type="hidden" name="settle_bill_id" id="settle_bill_id">
+					<input type="hidden" name="max_payment_amount" id="max_payment_amount" >
+				</form>
+					
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+				<button type="button" class="btn btn-primary" id="settle_payment_pay_button">Pay</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+
 {% endblock body %}
 
 {% block js %}
@@ -776,6 +813,8 @@
     var crf_token = "{{ csrf_token }}";
     var current_user_details = [{{ request.user.id }}, '{{ request.user.username }}'];
     var groups_members = JSON.parse('{{ groups_members|safe }}');
+    var svg_success_image = '{% static 'bootstrap-icons-1.8.1/check-circle-fill.svg' %}';
+    var svg_failed_image = '{% static 'bootstrap-icons-1.8.1/exclamation-triangle-fill.svg' %}';
 
 </script>
 <script src="{% static 'home/js/dashboard.js' %}"></script>

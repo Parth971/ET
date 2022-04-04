@@ -3,7 +3,7 @@ $(document).ready(function () {
     function remove_clicked_class() {
         $('#dashboard_side_bar').removeClass('side_bar_row_clicked');
         $('#activity_side_bar').removeClass('side_bar_row_clicked');
-        $('#all_expense_side_bar').removeClass('side_bar_row_clicked');
+        // $('#all_expense_side_bar').removeClass('side_bar_row_clicked');
 
         let all_friends_elements = $('.friends_name_list_wrapper').children()
         let all_groups_elements = $('.group_name_list_wrapper').children()
@@ -20,13 +20,13 @@ $(document).ready(function () {
 
     $('.dashboard_wrapper').css('display', 'block');
     $('.activity_wrapper').css('display', 'none');
-    $('.all_expense_wrapper').css('display', 'none');
+    // $('.all_expense_wrapper').css('display', 'none');
     $('.data_box_wrapper').css('display', 'none');
 
     $('#dashboard_side_bar').click(function () {
         $('.dashboard_wrapper').css('display', 'block');
         $('.activity_wrapper').css('display', 'none');
-        $('.all_expense_wrapper').css('display', 'none');
+        // $('.all_expense_wrapper').css('display', 'none');
         $('.data_box_wrapper').css('display', 'none');
 
         remove_clicked_class();
@@ -36,23 +36,23 @@ $(document).ready(function () {
     $('#activity_side_bar').click(function () {
         $('.dashboard_wrapper').css('display', 'none');
         $('.activity_wrapper').css('display', 'block');
-        $('.all_expense_wrapper').css('display', 'none');
+        // $('.all_expense_wrapper').css('display', 'none');
         $('.data_box_wrapper').css('display', 'none');
 
         remove_clicked_class();
         $('#activity_side_bar').addClass('side_bar_row_clicked');
 
     });
-    $('#all_expense_side_bar').click(function () {
-        $('.dashboard_wrapper').css('display', 'none');
-        $('.activity_wrapper').css('display', 'none');
-        $('.all_expense_wrapper').css('display', 'block');
-        $('.data_box_wrapper').css('display', 'none');
+    // $('#all_expense_side_bar').click(function () {
+    //     $('.dashboard_wrapper').css('display', 'none');
+    //     $('.activity_wrapper').css('display', 'none');
+    //     $('.all_expense_wrapper').css('display', 'block');
+    //     $('.data_box_wrapper').css('display', 'none');
 
-        remove_clicked_class();
-        $('#all_expense_side_bar').addClass('side_bar_row_clicked');
+    //     remove_clicked_class();
+    //     $('#all_expense_side_bar').addClass('side_bar_row_clicked');
 
-    });
+    // });
 
     $('#add_expense_modal').on('hidden.bs.modal', function (e) {
         reset_expense();
@@ -76,7 +76,7 @@ $(document).ready(function () {
 
         $('.dashboard_wrapper').css('display', 'none');
         $('.activity_wrapper').css('display', 'none');
-        $('.all_expense_wrapper').css('display', 'none');
+        // $('.all_expense_wrapper').css('display', 'none');
         $('.data_box_wrapper').css('display', 'block');
 
         // get this details for this friend id 
@@ -111,10 +111,11 @@ $(document).ready(function () {
                 for (let i = 0; i < result['settlements'].length; i++) {
 
                     let settlement = result['settlements'][i];
+                    // console.log(settlement);
 
                     let settle_btn = '';
                     if (settlement['debt'] != 0 && settlement['bill_id__status'] == 'UNSETTLED') {
-                        settle_btn = '<button type="button" class="btn btn-primary btn-sm">Settle</button>';
+                        settle_btn = '<button type="button" class="btn btn-primary btn-sm settle_button_target" id="F_'+settlement['bill_id_id']+'" data-bs-toggle="modal" data-bs-target="#settlement_modal">Settle</button>';
                     }
 
                     let looping_content = `
@@ -137,7 +138,7 @@ $(document).ready(function () {
                                             </tr>
                                             <tr>
                                                 <td scope="col">Bill created on</td>
-                                                <td scope="col">${settlement['bill_id__date']}</td>
+                                                <td scope="col">${new Date(settlement['bill_id__date']).toLocaleDateString("en-US")}, ${new Date(settlement['bill_id__date']).getHours()}:${new Date(settlement['bill_id__date']).getMinutes()}</td>
                                             </tr>
                                             <tr>
                                                 <td scope="col">Split type</td>
@@ -195,12 +196,92 @@ $(document).ready(function () {
                 $('.data_box_body').empty();
                 $('.data_box_body').append(html_content);
 
+                $('.settle_button_target').click(function(){
+                    let current_button = $(this);
+                    let bill_id = current_button.attr('id').split('_')[1];
+                    console.log(bill_id);
+                    $('#settle_bill_id').val(bill_id);
+                    $('#max_payment_amount').val(current_button.prev().text());
+                });
+
             },
             failure: function () {
                 console.log('failed');
             }
         });
 
+
+    });
+
+    $('#settle_payment_pay_button').click(function () {
+        $('.settle_response_message').empty();
+        $('.settle_response_message').css('display', 'none');
+        let bill_id = $('#settle_bill_id').val();
+        let max_payment_amount = parseInt($('#max_payment_amount').val());
+
+
+        let current_value = parseInt($('#settle_payment').val());
+
+        if (current_value > 0 && current_value <= max_payment_amount) {
+            $('.invalid_value_error').css('display', 'none');
+            console.log('submitted');
+
+            $.ajax({
+                url: url,
+                data: {
+                    csrfmiddlewaretoken: crf_token,
+                    state: "inactive",
+                    'request_motive': 'settle_payment',
+                    'bill_id': bill_id,
+                    'payed_amount': current_value
+                },
+                type: 'post',
+                success: function (result) {
+                    console.log(result);
+                    if(result.status == 'success') {
+                        $('#max_payment_amount').val(max_payment_amount-current_value);
+                        $('#settle_payment').val('');
+                        $('.settle_response_message').empty();
+                        $('.settle_response_message').css('display', 'block');
+                        $('.settle_response_message').append(`<div class="alert alert-success d-flex align-items-center" role="alert">
+                        <img class="bi flex-shrink-0 me-2" width="24" height="24" src = "${svg_success_image}" alt="Success icon"/>
+                        <div>
+                          ${result.message}
+                        </div>
+                      </div>`);
+                    }
+                    else {
+                        $('.settle_response_message').empty();
+                        $('.settle_response_message').css('display', 'block');
+                        $('.settle_response_message').append(`<div class="alert alert-danger d-flex align-items-center" role="alert">
+                        <img class="bi flex-shrink-0 me-2" width="24" height="24" src = "${svg_failed_image}" alt="Failed icon"/>
+                        <div>
+                          ${result.message}
+                        </div>
+                      </div>`);
+                    }
+                    
+
+                },
+                failure: function () {
+                    console.log('failed');
+                }
+            });
+        }
+        else {
+            $('.invalid_value_error').css('display', 'block');
+        }
+
+
+    });
+
+    $('#settlement_modal').on('hidden.bs.modal', function (e) {
+        $('#settle_bill_id').val('');
+        $('#max_payment_amount').val('');
+        $('#settle_payment').val('')
+        $('.settle_response_message').empty();
+        $('.settle_response_message').css('display', 'none');
+        $('.invalid_value_error').css('display', 'none');
 
     });
 
@@ -223,7 +304,7 @@ $(document).ready(function () {
 
         $('.dashboard_wrapper').css('display', 'none');
         $('.activity_wrapper').css('display', 'none');
-        $('.all_expense_wrapper').css('display', 'none');
+        // $('.all_expense_wrapper').css('display', 'none');
         $('.data_box_wrapper').css('display', 'block');
 
         // get this details for this group id 
@@ -296,7 +377,7 @@ $(document).ready(function () {
                                             </tr>
                                             <tr>
                                                 <td scope="col">Bill created on</td>
-                                                <td scope="col">${settlement['bill_id__date']}</td>
+                                                <td scope="col">${new Date(settlement['bill_id__date']).toLocaleDateString("en-US")}, ${new Date(settlement['bill_id__date']).getHours()}:${new Date(settlement['bill_id__date']).getMinutes()}</td>
                                             </tr>
                                             <tr>
                                                 <td scope="col">Split type</td>
@@ -566,7 +647,7 @@ $(document).ready(function () {
             $('#group_member_number_error').css('display', 'none');
         }
 
-        var re = /^(?!\s)(?!.*\s$)(?=.*[a-zA-Z0-9])[a-zA-Z0-9 ]{2,}$/;
+        var re = /^(?!\s)(?!.*\s$)(?=.*[a-zA-Z0-9])[a-zA-Z0-9 -]{2,}$/;
         if (re.test($('#group_name_input').val())) {
             $('#group_name_error').css('display', 'none');
             group_name = $('#group_name_input').val();
@@ -657,7 +738,7 @@ $(document).ready(function () {
                 <div class="input-group mb-3">
                     <input type="text" class="form-control" aria-label="Username"
                         value='`+ current_user_details[1] + `' disabled>
-                    <span class="input-group-text">$</span>
+                    <span class="input-group-text">&#8377;</span>
                     <input type="text" class="form-control friend_members_input_target" id="`+ current_user_details[0] + '_' + current_user_details[1] + `" aria-label="amount" value='0'>
                 </div>
             </div>`;
@@ -666,7 +747,7 @@ $(document).ready(function () {
                 <div class="input-group mb-3">
                     <input type="text" class="form-control" aria-label="Username"
                         value='`+ current_user_details[1] + `' disabled>
-                    <span class="input-group-text">$</span>
+                    <span class="input-group-text">&#8377;</span>
                     <input type="text" class="form-control friend_members_must_pay_input_target" id="mustpay_`+ current_user_details[0] + '_' + current_user_details[1] + `" aria-label="amount" value='0'>
                     <span class="input-group-text friend-percentage-span" style='display:none;'>%</span>
                 </div>
@@ -676,7 +757,7 @@ $(document).ready(function () {
                 <div class="input-group mb-3">
                     <input type="text" class="form-control" aria-label="Username"
                         value='`+ current_selceted_friend_name + `' disabled>
-                    <span class="input-group-text">$</span>
+                    <span class="input-group-text">&#8377;</span>
                     <input type="text" class="form-control friend_members_input_target" id="`+ current_id + '_' + current_selceted_friend_name + `" aria-label="amount" value='0'>
                 </div>
             </div>`;
@@ -685,7 +766,7 @@ $(document).ready(function () {
                 <div class="input-group mb-3">
                     <input type="text" class="form-control" aria-label="Username"
                         value='`+ current_selceted_friend_name + `' disabled>
-                    <span class="input-group-text">$</span>
+                    <span class="input-group-text">&#8377;</span>
                     <input type="text" class="form-control friend_members_must_pay_input_target" id="mustpay_`+ current_id + '_' + current_selceted_friend_name + `" aria-label="amount" value='0'>
                     <span class="input-group-text friend-percentage-span" style='display:none;'>%</span>
                 </div>
@@ -739,7 +820,7 @@ $(document).ready(function () {
                 <div class="input-group mb-3">
                     <input type="text" class="form-control" aria-label="Username"
                         value='`+ name + `' disabled>
-                    <span class="input-group-text">$</span>
+                    <span class="input-group-text">&#8377;</span>
                     <input type="text" class="form-control grp_members_input_target" id="`+ id + '_' + name + `" aria-label="amount" value='0'>
                 </div>
             </div>`;
@@ -748,7 +829,7 @@ $(document).ready(function () {
                     <div class="input-group mb-3">
                         <input type="text" class="form-control" aria-label="Username"
                             value='`+ name + `' disabled>
-                        <span class="input-group-text">$</span>
+                        <span class="input-group-text">&#8377;</span>
                         <input type="text" class="form-control grp_members_must_pay_input_target" id="mustpay_`+ id + '_' + name + `" aria-label="amount" value='0'>
                         <span class="input-group-text percentage-span" style='display:none;'>%</span>
                     </div>
@@ -1046,7 +1127,7 @@ $(document).ready(function () {
 
         }
 
-        var re = /^(?!\s)(?!.*\s$)(?=.*[a-zA-Z0-9])[a-zA-Z0-9 ]{2,}$/;
+        var re = /^(?!\s)(?!.*\s$)(?=.*[a-zA-Z0-9])[a-zA-Z0-9 -]{2,}$/;
         if (re.test($('#friend_expense_name').val())) {
             $('#friend_expense_name').css('border', '1px solid #ced4da');
             friend_expense_name = $('#friend_expense_name').val();
@@ -1234,7 +1315,7 @@ $(document).ready(function () {
             group_id = $('#group_name option:selected').val();
         }
 
-        var re = /^(?!\s)(?!.*\s$)(?=.*[a-zA-Z0-9])[a-zA-Z0-9 ]{2,}$/;
+        var re = /^(?!\s)(?!.*\s$)(?=.*[a-zA-Z0-9])[a-zA-Z0-9 -]{2,}$/;
         if (re.test($('#expense_name').val())) {
             $('#expense_name').css('border', '1px solid #ced4da');
             expense_name = $('#expense_name').val();

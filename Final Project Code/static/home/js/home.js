@@ -190,6 +190,14 @@ $(document).ready(function () {
 
     myInput.onfocus = function () {
         document.getElementById("message").style.display = "block";
+        letter.classList.remove("valid");
+        letter.classList.add("invalid");
+        capital.classList.remove("valid");
+        capital.classList.add("invalid");
+        number.classList.remove("valid");
+        number.classList.add("invalid");
+        length.classList.remove("valid");
+        length.classList.add("invalid");
     }
     myInput.onblur = function () {
         document.getElementById("message").style.display = "none";
