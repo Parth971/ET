@@ -524,7 +524,7 @@ def get_group(request):
     
     payers_list = [list(Settlement.objects.select_related('user_id').filter(paid__gt=F('must_pay'), group_id=current_group, bill_id_id=s['bill_id_id']).values('user_id_id', 'user_id__username')) for s in settlements]
 
-    print(payers_list)
+    # print(payers_list)
     # print(settlements)
 
     # zipped_bill_settlements = []
@@ -754,7 +754,7 @@ def dashboard(request):
 
     # All Users who is not friend
     my_friends = Friend.objects.filter(user_id_id=request.user.id, status='ACTIVE').values('friend_id__id')
-    not_friend_users = CustomUser.objects.filter(~Q(id=request.user.id), ~Q(id__in=my_friends)).values('id', 'username')
+    not_friend_users = CustomUser.objects.filter(~Q(id=request.user.id), ~Q(id__in=my_friends)).exclude(is_superuser=True).values('id', 'username')
 
     # All my friends
     friends_list = Friend.objects.filter(user_id_id=request.user.id, status='ACTIVE').values('friend_id__id', 'friend_id__username')
