@@ -1,9 +1,10 @@
-from tokenize import group
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 
 from home.models import CustomUser, Activity, Group, Group_Membership, Friend, Bill, Settlement
 from django.db.models import Q
+from django.db.models import F
+
 from django.contrib.auth import logout
 from django.contrib.auth import authenticate, login
 
@@ -23,9 +24,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.utils.encoding import force_bytes
 
 
-
-
-# helper funtions
+# Helper funtions
 def get_paid_debts(current_paid_amount, must_pay):
     if current_paid_amount >= must_pay:
         return (current_paid_amount, 0)
@@ -39,8 +38,7 @@ def is_bill_settled(settlements):
     
     return True
 
-
-# finalized dashboard views
+# Dashboard views
 def invite_friend(request):
     friend_id = int(request.POST.get('friend_id'))
 
@@ -505,6 +503,7 @@ def get_friend(request):
 
 def get_group(request):
     group_id = int(request.POST.get('group_id'))
+    print(group_id)
 
 
     current_group = Group.objects.get(id=group_id)
@@ -518,6 +517,14 @@ def get_group(request):
 
     settlements = Settlement.objects.select_related('bill_id').filter(user_id=request.user, group_id=current_group).values('user_id_id', 'user_id__username', 'bill_id_id', 'paid', 'debt', 'must_pay', 'bill_id__bill_name', 'bill_id__amount', 'bill_id__split_type', 'bill_id__date', 'bill_id__status')
 
+    # payers_list = Settlement.objects.select_related('user_id').filter(user_id__username__in=group_members_name, paid__gt=F('must_pay'), group_id=current_group).values('user_id_id', 'user_id__username')
+
+    
+
+    
+    payers_list = [list(Settlement.objects.select_related('user_id').filter(paid__gt=F('must_pay'), group_id=current_group, bill_id_id=s['bill_id_id']).values('user_id_id', 'user_id__username')) for s in settlements]
+
+    print(payers_list)
     # print(settlements)
 
     # zipped_bill_settlements = []
@@ -541,6 +548,7 @@ def get_group(request):
     result['total_members'] = len(group_members_name)
     result['group_members_name'] = list(group_members_name)
     result['settlements'] = list(settlements)
+    result['payers_list'] = list(payers_list)
 
     # print(list(settlements))
     # print(result)
@@ -552,15 +560,22 @@ def get_group(request):
 def settle_payment(request):
     bill_id = int(request.POST.get('bill_id'))
     payed_amount = int(request.POST.get('payed_amount'))
+    category = request.POST.get('category')
+    payer_id = int(request.POST.get('payer_id'))
+    print(payer_id)
 
-
+    # if category == 'F':
     bill = Bill.objects.get(id=bill_id)
     settlement = Settlement.objects.get(user_id=request.user, bill_id=bill)
+    payers_settlement = Settlement.objects.get(user_id_id=payer_id, bill_id=bill)
 
     if payed_amount>0 and payed_amount<=settlement.debt:
         settlement.paid += payed_amount
         settlement.debt -= payed_amount
         settlement.save()
+
+        payers_settlement.paid -= payed_amount
+        payers_settlement.save()
 
         # cheks for bill status 
         settlement = Settlement.objects.filter(bill_id=bill)
@@ -580,11 +595,47 @@ def settle_payment(request):
             'status': 'failed',
             'message' : 'Payment failed due to invalid value'
         }
+    # else:
+    #     payer_id = int(request.POST.get('payer_id'))
+    #     bill = Bill.objects.get(id=bill_id)
+    #     my_settlement = Settlement.objects.get(user_id_id=request.user.id, bill_id=bill)
+    #     payers_settlement = Settlement.objects.get(user_id_id=payer_id, bill_id=bill)
+
+    #     if payed_amount>0 and payed_amount<=my_settlement.debt:
+    #         my_settlement.paid += payed_amount
+    #         my_settlement.debt -= payed_amount
+    #         my_settlement.save()
+
+    #         payers_settlement.paid -= payed_amount
+    #         payers_settlement.save()
+
+    #         # cheks for bill status 
+    #         settlement = Settlement.objects.filter(bill_id=bill)
+    #         for i in range(len(settlement)):
+    #             if settlement[i].debt != 0:
+    #                 break
+    #         else:
+    #             bill.status = 'SETTLED'
+    #             bill.save()
+
+    #         data = {
+    #             'status': 'success',
+    #             'message' : 'Payment Successful.'
+    #         }
+    #     else:
+    #         data = {
+    #             'status': 'failed',
+    #             'message' : 'Payment failed due to invalid value'
+    #         }
+
+
+
+
     json_data = json.dumps(data)
     return json_data
 
 
-# Create your views here.
+# Main views
 def home(request):
     if request.user.is_authenticated:
         return redirect('dashboard')
@@ -773,7 +824,6 @@ def dashboard(request):
     }
     return render(request, 'home/dashboard.html', context)
     
-
 @cache_control(no_cache=True, must_revalidate=True, no_store=True)
 def password_reset_confirm(request, uidb64=None, token=None):
     assert uidb64 is not None and token is not None  # checked by URLconf
@@ -862,6 +912,10 @@ def password_reset_request(request):
                 return HttpResponse(json_data, content_type="application/json")
 
     return redirect('home')
+
+
+
+
 
 # def add_friend(request):
 #     if not request.user.is_authenticated:

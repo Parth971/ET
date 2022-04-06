@@ -773,12 +773,19 @@
 <div class="modal fade" id="settlement_modal" tabindex="-1" aria-labelledby="settlement_modal_label" aria-hidden="true">
 	<div class="modal-dialog">
 		<div class="modal-content">
+            
 			<div class="modal-header">
 				<h5 class="modal-title" id="settlement_modal_label">Pay..</h5>
 				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 			</div>
 			<div class="modal-body">
 				<form>
+                    
+                    <div class="dropdown mb-2">
+                        <select class="form-select" aria-label="Default select example" id='payers_list_dropdown_target'>
+
+                        </select>
+                    </div>
 					<div class="input-group mb-3">
 						<span class="input-group-text">&#8377;</span>
 						<input type="text" class="form-control" id='settle_payment' value='0'>
