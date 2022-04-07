@@ -130,48 +130,48 @@ $(document).ready(function () {
                             <div id="collapse${i}" class="accordion-collapse collapse"
                                 aria-labelledby="heading${i}" data-bs-parent="#accordionExample">
                                 <div class="accordion-body">
-                                    <table class="table table-hover table-bordered">
+                                    <table class="table table-hover table-striped">
                                         <tbody>
                                             <tr>
-                                                <td scope="col">Bill name</td>
-                                                <td scope="col">${capitalizeFirstLetter(settlement['bill_id__bill_name'])}</td>
+                                                <th class="table-dark" scope="col">Expense Name</th>
+                                                <th class="table-dark" scope="col">${capitalizeFirstLetter(settlement['bill_id__bill_name'])}</th>
                                             </tr>
                                             <tr>
-                                                <td scope="col">Bill created on</td>
+                                                <td scope="col">Date & Time</td>
                                                 <td scope="col">${new Date(settlement['bill_id__date']).toLocaleDateString("en-US")}, ${new Date(settlement['bill_id__date']).getHours()}:${new Date(settlement['bill_id__date']).getMinutes()}</td>
                                             </tr>
                                             <tr>
-                                                <td scope="col">Split type</td>
+                                                <td scope="col">Split Type</td>
                                                 <td scope="col">${capitalizeFirstLetter(settlement['bill_id__split_type'])}</td>
                                             </tr>
                                             <tr>
-                                                <td scope="col">Status</td>
-                                                <td scope="col">${settlement['bill_id__status']}</td>
+                                                <td scope="col">Current Status</td>
+                                                <td class="text-success" scope="col">${settlement['bill_id__status']}</td>
                                             </tr>
                                             <tr>
-                                                <td scope="col">Amount Paid by you</td>
-                                                <td scope="col">${settlement['paid']}</td>
+                                                <td scope="col">Amount Paid by You</td>
+                                                <td scope="col">&#8377; ${settlement['paid']}</td>
                                             </tr>
                                             <tr>
-                                                <td scope="col">Amount on your part</td>
-                                                <td scope="col">${settlement['must_pay']}</td>
+                                                <td scope="col">Amount on your Part</td>
+                                                <td scope="col">&#8377; ${settlement['must_pay']}</td>
                                             </tr>
                                             <tr>
-                                                <td scope="col">Debt amount</td>
+                                                <td scope="col">Debt Amount</td>
                                                 <td scope="col">
                                                     <div class="d-flex">
-                                                        <span class="me-auto align-self-center">${settlement['debt']}</span>
+                                                        <span class="me-auto align-self-center">&#8377; ${settlement['debt']}</span>
                                                         ${settle_btn}
                                                     </div>
                                                 </td>
                                             </tr>
                                             <tr>
-                                                <td scope="col">Lent amount</td>
-                                                <td scope="col">${get_lent_amount(settlement['paid'], settlement['debt'], settlement['must_pay'])}</td>
+                                                <td scope="col">Lent Amount</td>
+                                                <td scope="col">&#8377; ${get_lent_amount(settlement['paid'], settlement['debt'], settlement['must_pay'])}</td>
                                             </tr>
                                             <tr>
-                                                <td scope="col">Total Amount</td>
-                                                <td scope="col">${settlement['bill_id__amount']}</td>
+                                                <td class="fw-bold" scope="col">Total Amount</td>
+                                                <td class="fw-bold" scope="col">&#8377; ${settlement['bill_id__amount']}</td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -342,7 +342,7 @@ $(document).ready(function () {
                                 </div>
                             </div>
                             </div>
-                        <p>Created on ${new Date(result['group_date']).toLocaleDateString("en-US")}</p>
+                        <p>Dated on ${new Date(result['group_date']).toLocaleDateString("en-US")}</p>
                     </div>
                     <div class="group_body">
 
@@ -354,7 +354,7 @@ $(document).ready(function () {
 
                     let settle_btn = '';
                     if (settlement['debt'] != 0 && settlement['bill_id__status'] == 'UNSETTLED') {
-                        settle_btn = '<button type="button" class="btn btn-primary btn-sm">Settle</button>';
+                        settle_btn = '<button type="button" class="btn btn-info btn-sm">Settle</button>';
                     }
 
                     let looping_content = `
@@ -369,48 +369,48 @@ $(document).ready(function () {
                             <div id="collapse${i}" class="accordion-collapse collapse"
                                 aria-labelledby="heading${i}" data-bs-parent="#accordionExample">
                                 <div class="accordion-body">
-                                    <table class="table table-hover table-bordered">
+                                    <table class="table table-hover table-striped">
                                         <tbody>
                                             <tr>
-                                                <td scope="col">Bill name</td>
-                                                <td scope="col">${capitalizeFirstLetter(settlement['bill_id__bill_name'])}</td>
+                                                <th class="table-dark" scope="col">Expense Name</th>
+                                                <th class="table-dark" scope="col">${capitalizeFirstLetter(settlement['bill_id__bill_name'])}</th>
                                             </tr>
                                             <tr>
-                                                <td scope="col">Bill created on</td>
+                                                <td scope="col">Date & Time</td>
                                                 <td scope="col">${new Date(settlement['bill_id__date']).toLocaleDateString("en-US")}, ${new Date(settlement['bill_id__date']).getHours()}:${new Date(settlement['bill_id__date']).getMinutes()}</td>
                                             </tr>
                                             <tr>
-                                                <td scope="col">Split type</td>
+                                                <td scope="col">Split Type</td>
                                                 <td scope="col">${settlement['bill_id__split_type']}</td>
                                             </tr>
                                             <tr>
-                                                <td scope="col">Status</td>
-                                                <td scope="col">${settlement['bill_id__status']}</td>
+                                                <td scope="col">Current Status</td>
+                                                <td class="text-success" scope="col">${settlement['bill_id__status']}</td>
                                             </tr>
                                             <tr>
-                                                <td scope="col">Amount Paid by you</td>
-                                                <td scope="col">${settlement['paid']}</td>
+                                                <td scope="col">Amount Paid by You</td>
+                                                <td scope="col">&#8377; ${settlement['paid']}</td>
                                             </tr>
                                             <tr>
-                                                <td scope="col">Amount on your part</td>
-                                                <td scope="col">${settlement['must_pay']}</td>
+                                                <td scope="col">Amount on your Part</td>
+                                                <td scope="col">&#8377; ${settlement['must_pay']}</td>
                                             </tr>
                                             <tr>
-                                                <td scope="col">Debt amount</td>
+                                                <td scope="col">Debt Amount</td>
                                                 <td scope="col">
                                                     <div class="d-flex">
-                                                        <span class="me-auto align-self-center">${settlement['debt']}</span>
+                                                        <span class="me-auto align-self-center">&#8377; ${settlement['debt']}</span>
                                                         ${settle_btn}
                                                     </div>
                                                 </td>
                                             </tr>
                                             <tr>
-                                                <td scope="col">Lent amount</td>
-                                                <td scope="col">${get_lent_amount(settlement['paid'], settlement['debt'], settlement['must_pay'])}</td>
+                                                <td scope="col">Lent Amount</td>
+                                                <td scope="col">&#8377; ${get_lent_amount(settlement['paid'], settlement['debt'], settlement['must_pay'])}</td>
                                             </tr>
                                             <tr>
-                                                <td scope="col">Total Amount</td>
-                                                <td scope="col">${settlement['bill_id__amount']}</td>
+                                                <td class="fw-bold" scope="col">Total Amount</td>
+                                                <td class="fw-bold" scope="col">&#8377; ${settlement['bill_id__amount']}</td>
                                             </tr>
                                         </tbody>
                                     </table>

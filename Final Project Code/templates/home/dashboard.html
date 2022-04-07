@@ -110,18 +110,18 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-9">
+        <div data-aos="zoom-in-down" data-aos-duration="1000" class="col-md-9">
             <div class="row">
                 <div class="col">
                     <div class="dashboard_wrapper">
                         <div class="dashboard_header d-flex align-items-center">
                             <div class="heading me-auto">
-                                <span>DashBoard</span>
+                                <span class="fw-bold">DashBoard</span>
                             </div>
                             <div class="dashboard_header_btns">
-                                <button type="button" class="btn btn-primary btn-lg" data-bs-toggle="modal"
-                                    data-bs-target="#add_expense_modal">
-                                    Add Expense
+                                <button type="button" class="btn secondary-btn text-light btn-lg" data-bs-toggle="modal"
+                                    data-bs-target="#add_expense_modal"><i class="fa-solid fa-money-bill-1-wave"></i>
+                                     Add Expense
                                 </button>
                                 <!-- <button type="button" class="btn btn-primary btn-lg">Settle</button> -->
                             </div>
@@ -135,54 +135,54 @@
                                         </li> -->
                                         {% if unsettled_expenses %}
                                         {% for expense in unsettled_expenses %}
-                                        <li class="list-group-item d-flex align-items-center"
+                                        <li data-aos="fade-up" data-aos-duration="1000" class="list-group-item d-flex align-items-center"
                                             id='{{ expense.bill_id_id }}'>
                                             <div class="col-xs-8 pull-left me-auto">
                                                 <p><strong>{{ expense.bill_id__bill_name }} - {{ expense.group_id__group_name }}</strong></p>
                                             </div>
                                             <div class="col-xs-4 pull-right">
-                                                <button class="btn btn-primary" type="button" data-bs-toggle="collapse"
+                                                <button class="btn primary-btn text-light" type="button" data-bs-toggle="collapse"
                                                     data-bs-target="#billDetail_{{ expense.bill_id_id }}"
                                                     aria-expanded="false" aria-controls="collapseExample">
-                                                    Bill details<i class="fa-solid fa-arrow-down-short-wide"></i>
+                                                    Bill Details<i class="fa-solid fa-arrow-down-short-wide"></i>
                                                 </button>
                                             </div>
                                         </li>
                                         <div class="collapse" id="billDetail_{{ expense.bill_id_id }}">
                                             <div class="card card-body">
-                                                <table class="table table-hover table-bordered">
+                                                <table class="table table-hover table-striped">
                                                     <tbody>
                                                         <tr>
-                                                            <td scope="col">Bill name</td>
-                                                            <td scope="col">{{ expense.bill_id__bill_name }}</td>
+                                                            <th class="table-dark" scope="col">Expense Name</th>
+                                                            <th class="table-dark" scope="col">{{ expense.bill_id__bill_name }}</th>
                                                         </tr>
                                                         <tr>
-                                                            <td scope="col">Bill created on</td>
+                                                            <td scope="col">Date & Time</td>
                                                             <td scope="col">{{ expense.bill_id__date }}</td>
                                                         </tr>
                                                         <tr>
-                                                            <td scope="col">Split type</td>
+                                                            <td scope="col">Split Type</td>
                                                             <td scope="col">{{ expense.bill_id__split_type }}</td>
                                                         </tr>
                                                         <tr>
-                                                            <td scope="col">Amount Paid by you</td>
-                                                            <td scope="col">{{ expense.paid }}</td>
+                                                            <td scope="col">Amount Paid by You</td>
+                                                            <td scope="col">&#8377; {{ expense.paid }}</td>
                                                         </tr>
                                                         <tr>
-                                                            <td scope="col">Amount on your part</td>
-                                                            <td scope="col">{{ expense.must_pay }}</td>
+                                                            <td scope="col">Amount on your Part</td>
+                                                            <td scope="col">&#8377; {{ expense.must_pay }}</td>
                                                         </tr>
                                                         <tr>
                                                             <td scope="col">Debt amount</td>
-                                                            <td scope="col">{{ expense.debt }}</td>
+                                                            <td scope="col">&#8377; {{ expense.debt }}</td>
                                                         </tr>
                                                         <tr>
                                                             <td scope="col">Lent amount</td>
-                                                            <td scope="col">{{ expense.lent }}</td>
+                                                            <td scope="col">&#8377; {{ expense.lent }}</td>
                                                         </tr>
                                                         <tr>
-                                                            <td scope="col">Total Amount</td>
-                                                            <td scope="col">{{ expense.bill_id__amount }}</td>
+                                                            <td class="fw-bold" scope="col">Total Amount</td>
+                                                            <td class="fw-bold" scope="col">&#8377; {{ expense.bill_id__amount }}</td>
                                                         </tr>
                                                     </tbody>
                                                 </table>
@@ -238,7 +238,7 @@
                                         {% else %}
                                         <li class="list-group-item d-flex align-items-center">
                                             <div class="col-xs-8 pull-left me-auto">
-                                                <p><strong>No Friend Request</strong></p>
+                                                <p><i>No Friend Request</i></p>
                                             </div>
                                         </li>
                                         {% endif %}
@@ -259,7 +259,7 @@
                                         <li class="list-group-item d-flex align-items-center accept_reject_group_invite_target"
                                             id='{{ activity.id }}_{{ activity.group_id__id }}'>
                                             <div class="col-xs-8 pull-left me-auto">
-                                                <p><strong>{{ activity.group_id__group_name }}</strong></p>
+                                                <p>{{ activity.group_id__group_name }}</p>
                                             </div>
                                             <div class="col-xs-4 pull-right">
                                                 <button type="button" class="btn btn-success">Accept<i
@@ -278,7 +278,7 @@
                                         {% endif %}
                                         <li class="list-group-item align-items-center" id='group_request_error'>
                                             <div class="col-xs-8 pull-left me-auto">
-                                                <p><strong></strong></p>
+                                                <p><strong></strong></p>    
                                             </div>
                                         </li>
                                     </ul>
@@ -289,7 +289,7 @@
                                     <ul class="list-group">
                                         <li class="list-group-item d-flex align-items-center">
                                             <div class="col-xs-8 pull-left me-auto">
-                                                <h5><strong>Group expense requests</strong></h5>
+                                                <h5><strong>Group Expense Requests</strong></h5>
                                             </div>
                                         </li>
                                         {% if zipped_group_expense_requests %}
@@ -521,7 +521,7 @@
                                 <p><strong>{{ user.username }}</strong></p>
                             </div>
                             <div class="col-xs-4 pull-right">
-                                <button type="button" class="btn btn-success">invite<i class="fa fa-paper-plane-o"
+                                <button type="button" class="btn btn-success">Invite<i class="fa fa-paper-plane-o"
                                         aria-hidden="true"></i></button>
                             </div>
                         </li>
@@ -559,10 +559,10 @@
                         <div class="dropdown">
                             <button class="btn btn-secondary dropdown-toggle" type="button" id="add_friend_to_group"
                                 data-bs-toggle="dropdown" aria-expanded="false">
-                                Select members
+                                Select your Members
                             </button>
                             <span class="validation_error" id="group_member_number_error">
-                                Group has minimum 3 members.
+                                Please select atleast 3 members.
                             </span>
                             <ul class="dropdown-menu" aria-labelledby="add_friend_to_group">
                                 {% for friend in friends_list %}
@@ -583,7 +583,7 @@
                         <input type="text" aria-label="group name" id="group_name_input" class="form-control">
                     </div>
                     <div class="validation_error" id="group_name_error">
-                        Group name not valid.
+                        Invalid Group Name.
                     </div>
                 </form>
                 <div class="alert" id='add_group_response' role="alert">
@@ -604,18 +604,18 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="add_expense_modal_label">Add Expense</h5>
+                <h5 class="modal-title fw-bold" id="add_expense_modal_label">Add Expense <i class="text-dark fa fa-cash"></i></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
                     <input type="radio" class="btn-check" name="friend_group_radio" id="friend_radio_btn" value="friend"
                         autocomplete="off" checked>
-                    <label class="btn btn-outline-primary" for="friend_radio_btn">Friend</label>
+                    <label class="btn btn-outline-info" for="friend_radio_btn">Friend</label>
 
                     <input type="radio" class="btn-check" name="friend_group_radio" id="group_radio_btn" value="group"
                         autocomplete="off">
-                    <label class="btn btn-outline-primary" for="group_radio_btn">Group</label>
+                    <label class="btn btn-outline-info" for="group_radio_btn">Group</label>
                 </div>
 
                 <!-- Group tab  -->
@@ -673,7 +673,7 @@
                         </div>
 
                         <div class='input-group mb-3'>
-                            <label class="form-control" for="datetime-local">Date-Time</label>
+                            <label class="form-control" for="datetime-local">Select Data & Time</label>
                             <input class="form-control" type="datetime-local" id="datetime-local">
                         </div>
 
@@ -750,8 +750,7 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="message-text" class="col-form-label">Send Verify notification with
-                                message</label>
+                            <label for="message-text" class="col-form-label">Send a Message..... </label>
                             <textarea class="form-control" name='message' id="friend_message-text"></textarea>
                         </div>
                     </form>
@@ -763,7 +762,7 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 <button type="button" class="btn btn-primary" id='reset_form'>Reset</button>
-                <button type="button" class="btn btn-primary" id='add_expense'>Add expense</button>
+                <button type="button" class="btn btn-primary" id='add_expense'>Add Expense</button>
             </div>
         </div>
     </div>

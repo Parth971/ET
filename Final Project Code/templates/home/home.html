@@ -13,35 +13,89 @@
 
 
 {% load static %}
-<div class="container home_text">
-    <div class="row">
-        <div class="col-md-6">
-            <div>
-                <img src="{% static 'home/images/brand.png' %}" alt="Brand_Image">
+<section class="primary-section">
+    <div class="container home_text">
+        <div class="d-flex align-items-center row">
+            <div data-aos="flip-up" data-aos-duration="2000" class="col-md-6">
+                <div class="text-center">
+                    <img class="brand-img" src="{% static 'home/images/brand.svg' %}" alt="Brand_Image">
+                </div>
+            </div>
+            <div data-aos="flip-up" data-aos-duration="2000" class="col-md-6">
+                <h1 class="heading1">Stay Relaxed !</h1>
+                <h1 class="heading2">When sharing expenses<br> with anyone.</h1>
+                <h4 class="mt-4 para-detail">
+                    Keep track of your shared expenses with housemates, groups, friends and family.
+                </h4>
             </div>
         </div>
-        <div class="col-md-6">
-            <h1 class="heading1">Stay Relaxed!</h1>
-            <h1 class="heading2">When sharing expenses with everyone</h1>
-            <h4 class="para-detail">
-                Keep track of your shared expenses and balances with housemates, trips, groups, friends and family.
-            </h4>
+    </div>
+</section>
+
+<section class='background-secondary secondary-section'>
+    <div class="py-5 container">
+        <div class="mt-5 row">
+            <div data-aos="fade-left" data-aos-duration="2000" class="col-md-6">
+                <div class="ps-5 landing-content">
+                    <h1>Splitting expenses has </h1>
+                    <h1>never been easier</h1>
+                    <ul>
+                        <i class="fas fa-check-circle"></i> &nbsp;&nbsp;Share bills and IOUs.<br>
+                        <i class="fas fa-check-circle"></i> &nbsp;&nbsp;Make sure everyone gets paid back.<br>
+                        <i class="fas fa-check-circle"></i> &nbsp;&nbsp;Totally Free for Web.<br>
+                    </ul>
+                    <a href="#"><button class="btn btn-info">Let's Get Started</button></a>
+                </div>
+            </div>
+                <div data-aos="fade-right" data-aos-duration="2000" class="col-md-6">
+                    <img class="desktop-image" src="{% static 'home/images/desktop.png' %}" alt="" />
+                </div>
+            </div>
         </div>
     </div>
-</div>
+</section>
+
+
+        <section class="">
+            <!-- Footer -->
+            <footer class="text-center text-white" style="background-color: #0a4275;">
+              <!-- Grid container -->
+              <div class="container p-4 pb-0">
+                <!-- Section: CTA -->
+                <section class="">
+                  <p class="d-flex justify-content-center align-items-center">
+                    <span class="me-3">Register for free</span>
+                    <button type="button" class="btn btn-outline-light btn-rounded">
+                      Sign up!
+                    </button>
+                  </p>
+                </section>
+                <!-- Section: CTA -->
+              </div>
+              <!-- Grid container -->
+          
+              <!-- Copyright -->
+              <div class="text-center p-3" style="background-color: rgba(0, 0, 0, 0.2);">
+                © 2022 Copyright:
+                <a class="text-white text-decoration-none" href="#">Expense Tracker</a>
+              </div>
+              <!-- Copyright -->
+            </footer>
+            <!-- Footer -->
+          </section>
 
 
 
 {% endblock body %}
 
 {% block js %}
-    <script>
-        var crf_token = "{{ csrf_token }}";
-        var login_url = {% url 'login_handler' %};
-        var sign_up_url = {% url 'sign_up_handler' %};
-        var forgot_password_url = {% url 'password_reset' %};
+<script>
+    var crf_token = "{{ csrf_token }}";
+    var login_url = {% url 'login_handler' %};
+    var sign_up_url = {% url 'sign_up_handler' %};
+    var forgot_password_url = {% url 'password_reset' %};
 
-        
-    </script>
-    <script src="{% static 'home/js/home.js' %}"></script>
+
+</script>
+<script src="{% static 'home/js/home.js' %}"></script>
 {% endblock js %}
