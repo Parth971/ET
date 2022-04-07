@@ -1,4 +1,81 @@
-$(document).ready(function () {
+$(document).ready(function () {    
+
+    // display all not friends list 
+    function display_not_friends_list(){
+        not_friends = '';
+
+        for(const [key, value] of Object.entries(not_friend_users)) {
+            not_friends += `<li class="list-group-item d-flex align-items-center not_friend_target" id='${value['id']}'>
+            <div class="col-xs-8 pull-left me-auto">
+                <p><strong>${value['username']}</strong></p>
+            </div>
+            <div class="col-xs-4 pull-right">
+                <button type="button" class="btn btn-success">invite<i class="fa fa-paper-plane-o"
+                        aria-hidden="true"></i></button>
+            </div>
+        </li>`;
+        }
+
+        if(jQuery.isEmptyObject(not_friend_users) || not_friends == '') {
+            not_friends = ` <li class="list-group-item d-flex align-items-center">
+                                <div class="col-xs-8 pull-left me-auto">
+                                    <p><strong>No Users</strong></p>
+                                </div>
+                            </li>`;
+        }
+        not_friends += `<li class="list-group-item align-items-center" id='invite_error'>
+                            <div class="col-xs-8 pull-left me-auto">
+                                <p><strong></strong></p>
+                            </div>
+                        </li> `;
+        $('#add_friend_modal .modal-body .list-group').empty();
+        $('#add_friend_modal .modal-body .list-group').append(not_friends);
+    }
+
+    display_not_friends_list();
+    $('#search_friend input').keyup(function(){
+        let search_string = $('#search_friend input').val();
+        if(search_string == '') {
+            display_not_friends_list();
+        }
+        else {
+            let content = '';
+            for(const [key, value] of Object.entries(not_friend_users)) {
+                if (value['username'].toLowerCase().includes(search_string.toLowerCase())) {
+                    content += `<li class="list-group-item d-flex align-items-center not_friend_target" id='${value['id']}'>
+                    <div class="col-xs-8 pull-left me-auto">
+                        <p><strong>${value['username']}</strong></p>
+                    </div>
+                    <div class="col-xs-4 pull-right">
+                        <button type="button" class="btn btn-success">invite<i class="fa fa-paper-plane-o"
+                                aria-hidden="true"></i></button>
+                    </div>
+                </li>`;
+                }
+            }
+            if(jQuery.isEmptyObject(not_friend_users) || content == '') {
+                content = ` <li class="list-group-item d-flex align-items-center">
+                                    <div class="col-xs-8 pull-left me-auto">
+                                        <p><strong>No Users</strong></p>
+                                    </div>
+                                </li>`;
+            }
+            content += `<li class="list-group-item align-items-center" id='invite_error'>
+                                <div class="col-xs-8 pull-left me-auto">
+                                    <p><strong></strong></p>
+                                </div>
+                            </li> `;
+            $('#add_friend_modal .modal-body .list-group').empty();
+            $('#add_friend_modal .modal-body .list-group').append(content);
+        }
+        
+    });
+
+    $('#search_friend input[type=search]').on('search', function () {
+        display_not_friends_list();
+    });
+
+
 
     function remove_clicked_class() {
         $('#dashboard_side_bar').removeClass('side_bar_row_clicked');

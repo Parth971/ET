@@ -16,12 +16,15 @@ from functools import reduce
 from django.contrib import messages
 from django.views.decorators.cache import cache_control
 
-from django.core.mail import send_mail, BadHeaderError
+from django.core.mail import send_mail, BadHeaderError, EmailMessage
 from django.contrib.auth.forms import PasswordResetForm
 from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.contrib.auth.tokens import default_token_generator
-from django.utils.encoding import force_bytes
+from django.utils.encoding import force_bytes, force_str
+
+from django.contrib.sites.shortcuts import get_current_site 
+from .token import account_activation_token
 
 
 # Helper funtions
@@ -653,11 +656,28 @@ def sign_up_handler(request):
         try:
             user = CustomUser.objects.create_user(name, email, password)
             user.phone = phone
+            user.is_active = False
             user.save()
+
+            current_site = get_current_site(request)  
+            mail_subject = 'Activation link has been sent to your email id'  
+            message = render_to_string('acc_active_email.html', {  
+                'user': user,  
+                'domain': current_site.domain,  
+                'uid':urlsafe_base64_encode(force_bytes(user.pk)),  
+                'token':account_activation_token.make_token(user),  
+            })  
+            email = EmailMessage(  
+                        mail_subject, message, to=[email]  
+            )  
+            email.send()
+
+
             data = {
                 'message' : 'success'
             }
         except IntegrityError as e:
+            print(e)
             data = {
                 'message' : 'failed'
             }
@@ -665,6 +685,21 @@ def sign_up_handler(request):
         json_data = json.dumps(data)
         return HttpResponse(json_data, content_type="application/json")
     return HttpResponse('404 page not found')
+
+def activate(request, uidb64, token):  
+    User = CustomUser()  
+    try:  
+        uid = force_str(urlsafe_base64_decode(uidb64))  
+        user = CustomUser.objects.get(pk=uid)  
+    except(TypeError, ValueError, OverflowError, User.DoesNotExist):  
+        user = None  
+    if user is not None and account_activation_token.check_token(user, token):  
+        user.is_active = True  
+        user.save()  
+        return HttpResponse('Thank you for your email confirmation. Now you can login your account.')  
+    else:  
+        return HttpResponse('Activation link is invalid!')  
+
 
 @cache_control(no_cache=True, must_revalidate=True, no_store=True)
 def login_handler(request):
@@ -805,6 +840,7 @@ def dashboard(request):
     recent_activity = []
 
     # print(unsettled_expenses)
+    not_friend_users = list(not_friend_users)
     
     context = {
         'friends_list': friends_list,
@@ -813,6 +849,7 @@ def dashboard(request):
         # 'debts_list': debts_list,
         # 'recent_activity': recent_activity,
         'not_friend_users': not_friend_users,
+        'not_friend_users_for_js': json.dumps({i:not_friend_users[i] for i in range(len(not_friend_users))}),
         'friend_invites': friend_invites,
         'groups_members': json.dumps(groups_members),
         'group_invites': group_invites,
@@ -894,7 +931,9 @@ def password_reset_request(request):
 					}
                     email = render_to_string(email_template_name, c)
                     try:
-                        send_mail(subject, email, 'admin@example.com' , [user.email], fail_silently=False)
+                        # send_mail(subject, email, 'desaiparth971@gmail.com' , [user.email], fail_silently=False)
+                        email = EmailMessage(subject, email, to=[user.email])  
+                        email.send()  
                         data = {
                             'message' : 'success'
                         }

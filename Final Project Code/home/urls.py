@@ -13,6 +13,6 @@ urlpatterns = [
     # path('add_group/', views.add_group, name='add_group'),
     path('reset/<uidb64>/<token>/', views.password_reset_confirm, name='password_reset_confirm'),
     path("password_reset/", views.password_reset_request, name="password_reset"),
-    
+    path('activate/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/',  views.activate, name='activate'),  
     path('', views.home, name='home'),
 ]

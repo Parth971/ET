@@ -38,7 +38,6 @@
     color: rgb(99, 99, 99);
 }
 
-.=
 .add_icon_wrapper {
     font-size: 17px;
 }
@@ -211,4 +210,9 @@
 .invalid_value_error {
     display: none;
     color: red;
+}
+
+#add_friend_modal .modal-body {
+    max-height: 400px;
+    overflow-y: auto;
 }

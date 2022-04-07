@@ -307,7 +307,7 @@ $(document).ready(function () {
         }
 
 
-        if (signup_phone.match(/^\d{10}$/)) {
+        if (signup_phone.match(/^[9876]{1}\d{9}$/)) {
             phone = signup_phone;
             $('#signup_phone_error').css('display', 'none');
         }
@@ -335,7 +335,7 @@ $(document).ready(function () {
                     if (result.message == 'success') {
                         $('#signup_failed').empty();
                         $('#signup_failed').append(`<div class="alert alert-success alert-dismissible fade show" role="alert">
-                        Signup Successful!
+                        Email Verification sent. Please verify email to proceed!
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                       </div>`);
                         $('#signup_form').trigger("reset");
