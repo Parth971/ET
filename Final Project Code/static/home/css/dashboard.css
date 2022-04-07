@@ -203,9 +203,6 @@
     margin-top: 10px;
 }
 
-.expense_request_wrraper table {
-    width: 80%;
-}
 
 .invalid_value_error {
     display: none;

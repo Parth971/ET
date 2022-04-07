@@ -272,13 +272,13 @@
                                         {% else %}
                                         <li class="list-group-item d-flex align-items-center">
                                             <div class="col-xs-8 pull-left me-auto">
-                                                <p><strong>No Group Request</strong></p>
+                                                <p><i>No Group Request</i></p>
                                             </div>
                                         </li>
                                         {% endif %}
                                         <li class="list-group-item align-items-center" id='group_request_error'>
                                             <div class="col-xs-8 pull-left me-auto">
-                                                <p><strong></strong></p>    
+                                                <p><i></i></p>    
                                             </div>
                                         </li>
                                     </ul>
@@ -314,18 +314,18 @@
                                         <div class="collapse"
                                             id="billDetail_{{ activity.id }}_{{ activity.group_id__id }}_{{ activity.bill_id__id }}">
                                             <div class="card card-body">
-                                                <table class="table table-hover table-bordered">
+                                                <table class="table table-hover table-striped">
                                                     <tbody>
                                                         <tr>
-                                                            <td scope="col">Bill name</td>
-                                                            <td scope="col">{{ activity.bill_id__bill_name }}</td>
+                                                            <th class="table-dark" scope="col">Expense Name</th>
+                                                            <th class="table-dark" scope="col">{{ activity.bill_id__bill_name }}</th>
                                                         </tr>
                                                         <tr>
-                                                            <td scope="col">Bill created on</td>
+                                                            <td scope="col">Date & Time</td>
                                                             <td scope="col">{{ activity.bill_id__date }}</td>
                                                         </tr>
                                                         <tr>
-                                                            <td scope="col">Bill created by</td>
+                                                            <td scope="col">Bill Created By</td>
                                                             <td scope="col">{{ activity.sender_id__username }}</td>
                                                         </tr>
                                                         <tr>
@@ -337,20 +337,20 @@
                                                             <td scope="col">{{ activity.message }}</td>
                                                         </tr>
                                                         <tr>
-                                                            <td scope="col">Amount Paid by you</td>
-                                                            <td scope="col">{{ all_settles.paid }}</td>
+                                                            <td scope="col">Amount Paid by You</td>
+                                                            <td scope="col">&#8377; {{ all_settles.paid }}</td>
                                                         </tr>
                                                         <tr>
-                                                            <td scope="col">Amount on your part</td>
-                                                            <td scope="col">{{ all_settles.must_pay }}</td>
+                                                            <td scope="col">Amount on your Part</td>
+                                                            <td scope="col">&#8377; {{ all_settles.must_pay }}</td>
                                                         </tr>
                                                         <tr>
                                                             <td scope="col">Debt amount</td>
-                                                            <td scope="col">{{ all_settles.debt }}</td>
+                                                            <td scope="col">&#8377; {{ all_settles.debt }}</td>
                                                         </tr>
                                                         <tr>
-                                                            <td scope="col">Total Amount</td>
-                                                            <td scope="col">{{ activity.bill_id__amount }}</td>
+                                                            <td class="fw-bold" scope="col">Total Amount</td>
+                                                            <td class="fw-bold" scope="col">&#8377; {{ activity.bill_id__amount }}</td>
                                                         </tr>
                                                     </tbody>
                                                 </table>
@@ -360,7 +360,7 @@
                                         {% else %}
                                         <li class="list-group-item d-flex align-items-center">
                                             <div class="col-xs-8 pull-left me-auto">
-                                                <p><strong>No group expense requests</strong></p>
+                                                <p><i>No group expense requests</i></p>
                                             </div>
                                         </li>
                                         {% endif %}
@@ -384,7 +384,7 @@
                                                 <p><strong>{{ activity.sender_id__username }} - {{ activity.bill_id__bill_name }}</strong></p>
                                             </div>
                                             <div class="col-xs-4 pull-right">
-                                                <button class="btn btn-primary" type="button" data-bs-toggle="collapse"
+                                                <button class="btn primary-btn text-light" type="button" data-bs-toggle="collapse"
                                                     data-bs-target="#billDetail_{{ activity.id }}_{{ activity.group_id__id }}_{{ activity.bill_id__id }}"
                                                     aria-expanded="false" aria-controls="collapseExample">
                                                     Bill details<i class="fa-solid fa-arrow-down-short-wide"></i>
@@ -398,18 +398,18 @@
                                         <div class="collapse"
                                             id="billDetail_{{ activity.id }}_{{ activity.group_id__id }}_{{ activity.bill_id__id }}">
                                             <div class="card card-body">
-                                                <table class="table table-hover table-bordered">
+                                                <table class="table table-hover table-striped">
                                                     <tbody>
                                                         <tr>
-                                                            <td scope="col">Bill name</td>
-                                                            <td scope="col">{{ activity.bill_id__bill_name }}</td>
+                                                            <th class="table-dark" scope="col">Expense Name</th>
+                                                            <th class="table-dark" scope="col">{{ activity.bill_id__bill_name }}</th>
                                                         </tr>
                                                         <tr>
-                                                            <td scope="col">Bill created on</td>
+                                                            <td scope="col">Date & Time</td>
                                                             <td scope="col">{{ activity.bill_id__date }}</td>
                                                         </tr>
                                                         <tr>
-                                                            <td scope="col">Bill created by</td>
+                                                            <td scope="col">Bill Created By</td>
                                                             <td scope="col">{{ activity.sender_id__username }}</td>
                                                         </tr>
                                                         <tr>
@@ -421,20 +421,20 @@
                                                             <td scope="col">{{ activity.message }}</td>
                                                         </tr>
                                                         <tr>
-                                                            <td scope="col">Amount Paid by you</td>
-                                                            <td scope="col">{{ all_settles.paid }}</td>
+                                                            <td scope="col">Amount Paid by You</td>
+                                                            <td scope="col">&#8377; {{ all_settles.paid }}</td>
                                                         </tr>
                                                         <tr>
-                                                            <td scope="col">Amount on your part</td>
-                                                            <td scope="col">{{ all_settles.must_pay }}</td>
+                                                            <td scope="col">Amount on your Part</td>
+                                                            <td scope="col">&#8377; {{ all_settles.must_pay }}</td>
                                                         </tr>
                                                         <tr>
                                                             <td scope="col">Debt amount</td>
-                                                            <td scope="col">{{ all_settles.debt }}</td>
+                                                            <td scope="col">&#8377; {{ all_settles.debt }}</td>
                                                         </tr>
                                                         <tr>
-                                                            <td scope="col">Total Amount</td>
-                                                            <td scope="col">{{ activity.bill_id__amount }}</td>
+                                                            <td class="fw-bold" scope="col">Total Amount</td>
+                                                            <td class="fw-bold" scope="col">&#8377; {{ activity.bill_id__amount }}</td>
                                                         </tr>
                                                     </tbody>
                                                 </table>
@@ -444,7 +444,7 @@
                                         {% else %}
                                         <li class="list-group-item d-flex align-items-center">
                                             <div class="col-xs-8 pull-left me-auto">
-                                                <p><strong>No friend expense requests</strong></p>
+                                                <p><i>No friend expense requests</i></p>
                                             </div>
                                         </li>
                                         {% endif %}
