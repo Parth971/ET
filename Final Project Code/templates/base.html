@@ -70,10 +70,10 @@
           {% else %}
 
           <li class="nav-item">
-            <button type="button" class="btn btn-outline-light" data-bs-toggle="modal" data-bs-target="#login_modal">
+            <button type="button" class="btn btn-outline-light mx-2" data-bs-toggle="modal" data-bs-target="#login_modal">
               Log In
             </button>
-            <button type="button" class="btn btn-outline-light" data-bs-toggle="modal" data-bs-target="#signup_modal">
+            <button type="button" class="btn btn-outline-light mx-2" data-bs-toggle="modal" data-bs-target="#signup_modal">
               Join Us!
             </button>
           </li>
@@ -230,22 +230,21 @@
   <!-- Forgot password Modal -->
   <div class="modal fade" id="forgot_password_modal" tabindex="-1" aria-labelledby="forgot_password_modal_label"
     aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="forgot_password_modal_label">Reset Password</h5>
+          <h5 class="modal-title fw-bold" id="forgot_password_modal_label">Reset Password</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
 
-          <p>Forgotten your password? Enter your email address below, and we'll email instructions for setting a new
-            one.</p>
+          <p>Did you forgot your Password?<br> No worries, please enter your Registerd Email address below and we'll send you a link in a minute to reset your password.</p>
           <form id="reset_password_form">
             <div class="form-floating mb-3">
               <input type="email" class="form-control" id="reset_password_email" placeholder="name@example.com">
               <label for="reset_password_email">Email address</label>
               <span class='validation_error' id='reset_password_email_error'>
-                <p>Email not valid!</p>
+                <p>Invalid Email!</p>
               </span>
             </div>
 
@@ -255,7 +254,7 @@
           <div id="reset_password_message">
 
           </div>
-          <button class="btn btn-primary" id='send_password_reset_mail'>Send email</button>
+          <button class="btn primary-btn text-light" id='send_password_reset_mail'>Send Email</button>
 
         </div>
       </div>

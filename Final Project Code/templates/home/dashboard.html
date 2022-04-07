@@ -508,7 +508,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="add_friend_modal_label">Add/Invite for Friends</h5>
+                <h5 class="modal-title fw-bold" id="add_friend_modal_label">Add/ Invite your Friends</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -550,7 +550,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="add_group_modal_label">Add Group</h5>
+                <h5 class="modal-title fw-bold" id="add_group_modal_label">Add Group</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -590,9 +590,16 @@
 
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-primary" id="add_group_submit_btn">Add</button>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <div class="text-center mb-2">
+               <div class="row">
+                <div class="col-md-6">
+                    <button type="button" class="btn btn-sm primary-btn w-75 text-light" id="add_group_submit_btn">Add</button>
+                    
+                   </div>
+                   <div class="col-md-6">
+                    <button type="button" class="btn btn-sm secondary-btn w-75 text-light" data-bs-dismiss="modal">Close</button>
+                   </div>
+               </div>
             </div>
         </div>
     </div>
@@ -759,10 +766,18 @@
                     </div>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" id='reset_form'>Reset</button>
-                <button type="button" class="btn btn-primary" id='add_expense'>Add Expense</button>
+            <div class="mb-4">
+                <div class="row text-center">
+                    <div class="col-md-4">
+                         <button type="button" class="btn primary-btn w-75 text-light" id='add_expense'>Add Expense</button>
+                    </div>
+                    <div class="col-md-4">
+                         <button type="button" class="btn secondary-btn w-75 text-light" id='reset_form'>Reset</button>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="button" class="btn primary-btn w-75 text-light" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
