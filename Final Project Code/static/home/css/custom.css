@@ -1,12 +1,28 @@
+@import url('https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@300;400;700&display=swap');
 html, body {
     margin: 0;
     padding: 0;
     background-color: white;
     color: black;
+	font-family: 'Josefin Sans', sans-serif;
 }
-
+.primary-btn{
+	background-color: #044069;
+	color: white;
+}
+.secondary-btn{
+	background-color: #1b89d2;
+	color: white;
+}
+.brand-img{
+	width: 100%;
+	height: 400px;
+}
+.background-secondary{
+	background-color: #eee;
+}
 .navbar {
-    background-color: #18b46b!important;
+    background-color: #044069!important;
 }
 
 .validation_error {
@@ -14,7 +30,9 @@ html, body {
     display: none;
 }
 
-
+.greeting-text{
+	margin: 10px;
+}
 .nav-bar-btns{
 	margin-bottom: 0px;
 	list-style-type: none;
@@ -71,6 +89,25 @@ html, body {
 	position: relative;
 	left: -35px;
 	content: "✖";
+}
+
+.primary-section{
+	/* margin-bottom: 200px; */
+	height: 65vh;
+
+}
+.secondary-section{
+	height: 65vh;
+}
+.heading1 {
+	color: #044069;
+	font-size: 60px;
+	font-weight: 700;
+}
+.heading2 {
+	color: #044069;
+	font-size: 32px;
+	font-weight: 500;
 }
 
 
