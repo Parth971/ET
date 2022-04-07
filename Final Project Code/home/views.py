@@ -1,9 +1,10 @@
-from tokenize import group
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 
 from home.models import CustomUser, Activity, Group, Group_Membership, Friend, Bill, Settlement
 from django.db.models import Q
+from django.db.models import F
+
 from django.contrib.auth import logout
 from django.contrib.auth import authenticate, login
 
@@ -15,17 +16,18 @@ from functools import reduce
 from django.contrib import messages
 from django.views.decorators.cache import cache_control
 
-from django.core.mail import send_mail, BadHeaderError
+from django.core.mail import send_mail, BadHeaderError, EmailMessage
 from django.contrib.auth.forms import PasswordResetForm
 from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.contrib.auth.tokens import default_token_generator
-from django.utils.encoding import force_bytes
+from django.utils.encoding import force_bytes, force_str
+
+from django.contrib.sites.shortcuts import get_current_site 
+from .token import account_activation_token
 
 
-
-
-# helper funtions
+# Helper funtions
 def get_paid_debts(current_paid_amount, must_pay):
     if current_paid_amount >= must_pay:
         return (current_paid_amount, 0)
@@ -39,8 +41,7 @@ def is_bill_settled(settlements):
     
     return True
 
-
-# finalized dashboard views
+# Dashboard views
 def invite_friend(request):
     friend_id = int(request.POST.get('friend_id'))
 
@@ -505,6 +506,7 @@ def get_friend(request):
 
 def get_group(request):
     group_id = int(request.POST.get('group_id'))
+    print(group_id)
 
 
     current_group = Group.objects.get(id=group_id)
@@ -518,6 +520,14 @@ def get_group(request):
 
     settlements = Settlement.objects.select_related('bill_id').filter(user_id=request.user, group_id=current_group).values('user_id_id', 'user_id__username', 'bill_id_id', 'paid', 'debt', 'must_pay', 'bill_id__bill_name', 'bill_id__amount', 'bill_id__split_type', 'bill_id__date', 'bill_id__status')
 
+    # payers_list = Settlement.objects.select_related('user_id').filter(user_id__username__in=group_members_name, paid__gt=F('must_pay'), group_id=current_group).values('user_id_id', 'user_id__username')
+
+    
+
+    
+    payers_list = [list(Settlement.objects.select_related('user_id').filter(paid__gt=F('must_pay'), group_id=current_group, bill_id_id=s['bill_id_id']).values('user_id_id', 'user_id__username')) for s in settlements]
+
+    # print(payers_list)
     # print(settlements)
 
     # zipped_bill_settlements = []
@@ -541,6 +551,7 @@ def get_group(request):
     result['total_members'] = len(group_members_name)
     result['group_members_name'] = list(group_members_name)
     result['settlements'] = list(settlements)
+    result['payers_list'] = list(payers_list)
 
     # print(list(settlements))
     # print(result)
@@ -552,15 +563,22 @@ def get_group(request):
 def settle_payment(request):
     bill_id = int(request.POST.get('bill_id'))
     payed_amount = int(request.POST.get('payed_amount'))
+    category = request.POST.get('category')
+    payer_id = int(request.POST.get('payer_id'))
+    print(payer_id)
 
-
+    # if category == 'F':
     bill = Bill.objects.get(id=bill_id)
     settlement = Settlement.objects.get(user_id=request.user, bill_id=bill)
+    payers_settlement = Settlement.objects.get(user_id_id=payer_id, bill_id=bill)
 
     if payed_amount>0 and payed_amount<=settlement.debt:
         settlement.paid += payed_amount
         settlement.debt -= payed_amount
         settlement.save()
+
+        payers_settlement.paid -= payed_amount
+        payers_settlement.save()
 
         # cheks for bill status 
         settlement = Settlement.objects.filter(bill_id=bill)
@@ -580,11 +598,47 @@ def settle_payment(request):
             'status': 'failed',
             'message' : 'Payment failed due to invalid value'
         }
+    # else:
+    #     payer_id = int(request.POST.get('payer_id'))
+    #     bill = Bill.objects.get(id=bill_id)
+    #     my_settlement = Settlement.objects.get(user_id_id=request.user.id, bill_id=bill)
+    #     payers_settlement = Settlement.objects.get(user_id_id=payer_id, bill_id=bill)
+
+    #     if payed_amount>0 and payed_amount<=my_settlement.debt:
+    #         my_settlement.paid += payed_amount
+    #         my_settlement.debt -= payed_amount
+    #         my_settlement.save()
+
+    #         payers_settlement.paid -= payed_amount
+    #         payers_settlement.save()
+
+    #         # cheks for bill status 
+    #         settlement = Settlement.objects.filter(bill_id=bill)
+    #         for i in range(len(settlement)):
+    #             if settlement[i].debt != 0:
+    #                 break
+    #         else:
+    #             bill.status = 'SETTLED'
+    #             bill.save()
+
+    #         data = {
+    #             'status': 'success',
+    #             'message' : 'Payment Successful.'
+    #         }
+    #     else:
+    #         data = {
+    #             'status': 'failed',
+    #             'message' : 'Payment failed due to invalid value'
+    #         }
+
+
+
+
     json_data = json.dumps(data)
     return json_data
 
 
-# Create your views here.
+# Main views
 def home(request):
     if request.user.is_authenticated:
         return redirect('dashboard')
@@ -602,11 +656,28 @@ def sign_up_handler(request):
         try:
             user = CustomUser.objects.create_user(name, email, password)
             user.phone = phone
+            user.is_active = False
             user.save()
+
+            current_site = get_current_site(request)  
+            mail_subject = 'Activation link has been sent to your email id'  
+            message = render_to_string('acc_active_email.html', {  
+                'user': user,  
+                'domain': current_site.domain,  
+                'uid':urlsafe_base64_encode(force_bytes(user.pk)),  
+                'token':account_activation_token.make_token(user),  
+            })  
+            email = EmailMessage(  
+                        mail_subject, message, to=[email]  
+            )  
+            email.send()
+
+
             data = {
                 'message' : 'success'
             }
         except IntegrityError as e:
+            print(e)
             data = {
                 'message' : 'failed'
             }
@@ -614,6 +685,21 @@ def sign_up_handler(request):
         json_data = json.dumps(data)
         return HttpResponse(json_data, content_type="application/json")
     return HttpResponse('404 page not found')
+
+def activate(request, uidb64, token):  
+    User = CustomUser()  
+    try:  
+        uid = force_str(urlsafe_base64_decode(uidb64))  
+        user = CustomUser.objects.get(pk=uid)  
+    except(TypeError, ValueError, OverflowError, User.DoesNotExist):  
+        user = None  
+    if user is not None and account_activation_token.check_token(user, token):  
+        user.is_active = True  
+        user.save()  
+        return HttpResponse('Thank you for your email confirmation. Now you can login your account.')  
+    else:  
+        return HttpResponse('Activation link is invalid!')  
+
 
 @cache_control(no_cache=True, must_revalidate=True, no_store=True)
 def login_handler(request):
@@ -703,7 +789,7 @@ def dashboard(request):
 
     # All Users who is not friend
     my_friends = Friend.objects.filter(user_id_id=request.user.id, status='ACTIVE').values('friend_id__id')
-    not_friend_users = CustomUser.objects.filter(~Q(id=request.user.id), ~Q(id__in=my_friends)).values('id', 'username')
+    not_friend_users = CustomUser.objects.filter(~Q(id=request.user.id), ~Q(id__in=my_friends)).exclude(is_superuser=True).values('id', 'username')
 
     # All my friends
     friends_list = Friend.objects.filter(user_id_id=request.user.id, status='ACTIVE').values('friend_id__id', 'friend_id__username')
@@ -754,6 +840,7 @@ def dashboard(request):
     recent_activity = []
 
     # print(unsettled_expenses)
+    not_friend_users = list(not_friend_users)
     
     context = {
         'friends_list': friends_list,
@@ -762,6 +849,7 @@ def dashboard(request):
         # 'debts_list': debts_list,
         # 'recent_activity': recent_activity,
         'not_friend_users': not_friend_users,
+        'not_friend_users_for_js': json.dumps({i:not_friend_users[i] for i in range(len(not_friend_users))}),
         'friend_invites': friend_invites,
         'groups_members': json.dumps(groups_members),
         'group_invites': group_invites,
@@ -773,7 +861,6 @@ def dashboard(request):
     }
     return render(request, 'home/dashboard.html', context)
     
-
 @cache_control(no_cache=True, must_revalidate=True, no_store=True)
 def password_reset_confirm(request, uidb64=None, token=None):
     assert uidb64 is not None and token is not None  # checked by URLconf
@@ -844,7 +931,9 @@ def password_reset_request(request):
 					}
                     email = render_to_string(email_template_name, c)
                     try:
-                        send_mail(subject, email, 'admin@example.com' , [user.email], fail_silently=False)
+                        # send_mail(subject, email, 'desaiparth971@gmail.com' , [user.email], fail_silently=False)
+                        email = EmailMessage(subject, email, to=[user.email])  
+                        email.send()  
                         data = {
                             'message' : 'success'
                         }
@@ -862,6 +951,10 @@ def password_reset_request(request):
                 return HttpResponse(json_data, content_type="application/json")
 
     return redirect('home')
+
+
+
+
 
 # def add_friend(request):
 #     if not request.user.is_authenticated:
