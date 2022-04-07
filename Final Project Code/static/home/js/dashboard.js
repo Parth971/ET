@@ -1,4 +1,81 @@
-$(document).ready(function () {
+$(document).ready(function () {    
+
+    // display all not friends list 
+    function display_not_friends_list(){
+        not_friends = '';
+
+        for(const [key, value] of Object.entries(not_friend_users)) {
+            not_friends += `<li class="list-group-item d-flex align-items-center not_friend_target" id='${value['id']}'>
+            <div class="col-xs-8 pull-left me-auto">
+                <p><strong>${value['username']}</strong></p>
+            </div>
+            <div class="col-xs-4 pull-right">
+                <button type="button" class="btn btn-success">invite<i class="fa fa-paper-plane-o"
+                        aria-hidden="true"></i></button>
+            </div>
+        </li>`;
+        }
+
+        if(jQuery.isEmptyObject(not_friend_users) || not_friends == '') {
+            not_friends = ` <li class="list-group-item d-flex align-items-center">
+                                <div class="col-xs-8 pull-left me-auto">
+                                    <p><strong>No Users</strong></p>
+                                </div>
+                            </li>`;
+        }
+        not_friends += `<li class="list-group-item align-items-center" id='invite_error'>
+                            <div class="col-xs-8 pull-left me-auto">
+                                <p><strong></strong></p>
+                            </div>
+                        </li> `;
+        $('#add_friend_modal .modal-body .list-group').empty();
+        $('#add_friend_modal .modal-body .list-group').append(not_friends);
+    }
+
+    display_not_friends_list();
+    $('#search_friend input').keyup(function(){
+        let search_string = $('#search_friend input').val();
+        if(search_string == '') {
+            display_not_friends_list();
+        }
+        else {
+            let content = '';
+            for(const [key, value] of Object.entries(not_friend_users)) {
+                if (value['username'].toLowerCase().includes(search_string.toLowerCase())) {
+                    content += `<li class="list-group-item d-flex align-items-center not_friend_target" id='${value['id']}'>
+                    <div class="col-xs-8 pull-left me-auto">
+                        <p><strong>${value['username']}</strong></p>
+                    </div>
+                    <div class="col-xs-4 pull-right">
+                        <button type="button" class="btn btn-success">invite<i class="fa fa-paper-plane-o"
+                                aria-hidden="true"></i></button>
+                    </div>
+                </li>`;
+                }
+            }
+            if(jQuery.isEmptyObject(not_friend_users) || content == '') {
+                content = ` <li class="list-group-item d-flex align-items-center">
+                                    <div class="col-xs-8 pull-left me-auto">
+                                        <p><strong>No Users</strong></p>
+                                    </div>
+                                </li>`;
+            }
+            content += `<li class="list-group-item align-items-center" id='invite_error'>
+                                <div class="col-xs-8 pull-left me-auto">
+                                    <p><strong></strong></p>
+                                </div>
+                            </li> `;
+            $('#add_friend_modal .modal-body .list-group').empty();
+            $('#add_friend_modal .modal-body .list-group').append(content);
+        }
+        
+    });
+
+    $('#search_friend input[type=search]').on('search', function () {
+        display_not_friends_list();
+    });
+
+
 
     function remove_clicked_class() {
         $('#dashboard_side_bar').removeClass('side_bar_row_clicked');
@@ -16,7 +93,6 @@ $(document).ready(function () {
         }
 
     }
-
 
     $('.dashboard_wrapper').css('display', 'block');
     $('.activity_wrapper').css('display', 'none');
@@ -59,6 +135,7 @@ $(document).ready(function () {
         $("#friend_radio_btn").prop("checked", true);
         $('.group_modal').addClass('hide-modal');
         $('.friend_modal').removeClass('hide-modal');
+        $('#add_friend_expense_response').css('display', 'none');
 
     });
 
@@ -198,10 +275,18 @@ $(document).ready(function () {
 
                 $('.settle_button_target').click(function(){
                     let current_button = $(this);
-                    let bill_id = current_button.attr('id').split('_')[1];
+                    let bill_id = current_button.attr('id');
                     console.log(bill_id);
                     $('#settle_bill_id').val(bill_id);
                     $('#max_payment_amount').val(current_button.prev().text());
+
+                    $('#payers_list_dropdown_target').parent().hide();
+                    let dropdown_content = `<option selected value="${result['friend_user_id']}">${result['friend_name']}</option>`;
+
+
+                    $('#payers_list_dropdown_target').empty();
+                    $('#payers_list_dropdown_target').append(dropdown_content);
+                    
                 });
 
             },
@@ -216,39 +301,73 @@ $(document).ready(function () {
     $('#settle_payment_pay_button').click(function () {
         $('.settle_response_message').empty();
         $('.settle_response_message').css('display', 'none');
-        let bill_id = $('#settle_bill_id').val();
+
         let max_payment_amount = parseInt($('#max_payment_amount').val());
+        let error = false;
+        let payer_id;
+        let category = $('#settle_bill_id').val().split('_')[0];
+        let bill_id = $('#settle_bill_id').val().split('_')[1];
+        let payer_val = $('#payers_list_dropdown_target option:selected').val()
+        let current_value = $('#settle_payment').val()
 
+        if(payer_val == '0') {
+            $('#payers_list_dropdown_target').css('border', '1px solid red');
+            error = true;
+        }
+        else {
+            $('#payers_list_dropdown_target').css('border', '1px solid #ced4da');
+            payer_id = $('#payers_list_dropdown_target option:selected').val();
+        }
+        
+        if(isPositiveInteger(current_value)) {
+            current_value = parseInt(current_value);
+            if (current_value <= 0 || current_value > max_payment_amount) {
+                $('.invalid_value_error').css('display', 'block');
+                console.log('not valid');
+                error = true;
+            }
+            else {
+                $('.invalid_value_error').css('display', 'none');
+            }
+        }
+        else {
+            $('.invalid_value_error').css('display', 'block');
+            error = true;
+        }
+        
+        
 
-        let current_value = parseInt($('#settle_payment').val());
-
-        if (current_value > 0 && current_value <= max_payment_amount) {
-            $('.invalid_value_error').css('display', 'none');
-            console.log('submitted');
-
+        if (!error) {
+            console.log(category);
+            console.log(bill_id);
+            console.log(current_value);
+            console.log(payer_id);
             $.ajax({
                 url: url,
                 data: {
                     csrfmiddlewaretoken: crf_token,
                     state: "inactive",
                     'request_motive': 'settle_payment',
+                    'category': category,
                     'bill_id': bill_id,
-                    'payed_amount': current_value
+                    'payed_amount': current_value,
+                    'payer_id': payer_id
                 },
                 type: 'post',
                 success: function (result) {
                     console.log(result);
                     if(result.status == 'success') {
-                        $('#max_payment_amount').val(max_payment_amount-current_value);
-                        $('#settle_payment').val('');
-                        $('.settle_response_message').empty();
-                        $('.settle_response_message').css('display', 'block');
-                        $('.settle_response_message').append(`<div class="alert alert-success d-flex align-items-center" role="alert">
-                        <img class="bi flex-shrink-0 me-2" width="24" height="24" src = "${svg_success_image}" alt="Success icon"/>
-                        <div>
-                          ${result.message}
-                        </div>
-                      </div>`);
+                    //     $('#max_payment_amount').val(max_payment_amount-current_value);
+                    //     $('#settle_payment').val('');
+                    //     $('.settle_response_message').empty();
+                    //     $('.settle_response_message').css('display', 'block');
+                    //     $('.settle_response_message').append(`<div class="alert alert-success d-flex align-items-center" role="alert">
+                    //     <img class="bi flex-shrink-0 me-2" width="24" height="24" src = "${svg_success_image}" alt="Success icon"/>
+                    //     <div>
+                    //       ${result.message}
+                    //     </div>
+                    //   </div>`);
+                        location.reload();
                     }
                     else {
                         $('.settle_response_message').empty();
@@ -268,9 +387,6 @@ $(document).ready(function () {
                 }
             });
         }
-        else {
-            $('.invalid_value_error').css('display', 'block');
-        }
 
 
     });
@@ -282,6 +398,7 @@ $(document).ready(function () {
         $('.settle_response_message').empty();
         $('.settle_response_message').css('display', 'none');
         $('.invalid_value_error').css('display', 'none');
+        $('#payers_list_dropdown_target').empty();
 
     });
 
@@ -354,7 +471,7 @@ $(document).ready(function () {
 
                     let settle_btn = '';
                     if (settlement['debt'] != 0 && settlement['bill_id__status'] == 'UNSETTLED') {
-                        settle_btn = '<button type="button" class="btn btn-info btn-sm">Settle</button>';
+                        settle_btn = '<button type="button" class="btn btn-primary btn-sm settle_button_target" id="G_'+settlement['bill_id_id']+'_'+i+'" data-bs-toggle="modal" data-bs-target="#settlement_modal">Settle</button>';
                     }
 
                     let looping_content = `
@@ -434,6 +551,25 @@ $(document).ready(function () {
                 let html_content = content + middle + after_content;
                 $('.data_box_body').empty();
                 $('.data_box_body').append(html_content);
+
+                $('.settle_button_target').click(function(){
+                    let current_button = $(this);
+                    let bill_id = current_button.attr('id');
+                    console.log(bill_id);
+                    let dropdown_content = `<option value='0' selected>Select Payers</option>`;
+
+                    let bill_number = parseInt(bill_id.split('_')[2]);
+                    for(let k=0; k<result['payers_list'][bill_number].length; k++) {
+                        dropdown_content += `<option value="${result['payers_list'][[bill_number]][k]['user_id_id']}">${result['payers_list'][[bill_number]][k]['user_id__username']}</option>`;
+                    }
+
+                    $('#payers_list_dropdown_target').empty();
+                    $('#payers_list_dropdown_target').append(dropdown_content);
+                    $('#payers_list_dropdown_target').parent().show();
+
+                    $('#settle_bill_id').val(bill_id);
+                    $('#max_payment_amount').val(current_button.prev().text());
+                });
 
             },
             failure: function () {
@@ -604,6 +740,7 @@ $(document).ready(function () {
             $('.group_modal').removeClass('hide-modal');
         }
         reset_expense();
+        $('#add_friend_expense_response').css('display', 'none');
     });
 
     // for getting frends list for adding group 
@@ -864,6 +1001,7 @@ $(document).ready(function () {
     // reset both forms 
     $('#reset_form').click(function () {
         reset_expense();
+        $('#add_friend_expense_response').css('display', 'none');
     });
 
 
