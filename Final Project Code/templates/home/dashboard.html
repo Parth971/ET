@@ -8,6 +8,80 @@
 <link rel="stylesheet" href="{% static 'home/css/dashboard.css' %}" type="text/css" />
 {% endblock css %}
 
+{% load define_action %}
+{% block notification %}
+<div class="dropdown mx-3" id="notification">
+    {% comment %} <button class="btn text-light dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+        <span class='text-dark'><i class="text-light fa fa-user"></i></span>
+    </button> {% endcomment %}
+    <a class="nav-link text-light position-relative" id="navbarDropdown" role="button"
+              data-bs-toggle="dropdown" aria-expanded="false">
+              <span class='text-dark'><i class="fa-solid fa-bell text-light"></i></span>
+              <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                {% add_value friend_invites|length group_invites|length %}
+              </span>
+          </a>
+    <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+        <li class="list-group-item align-items-center d-flex" style="border: 0;">
+            <div style='display: inline-block;' class='me-auto'>
+                <p class='m-0'><i><strong>Friend Requests</strong></i></p>
+            </div>
+        </li>
+        {% if friend_invites %}
+        {% for activity in friend_invites %}
+        <li class="list-group-item align-items-center d-flex accept_reject_friend_invite_target" style="border: 0;"
+            id='{{ activity.id }}_{{ activity.sender_id }}'>
+            <div style='display: inline-block;' class='me-auto'>
+                <p class='m-0'>{{ activity.sender_id__username }}</p>
+            </div>
+            <div style='display: inline-block;'>
+                <button type="button" class="btn p-0" style="content: 'Accept';"><i class="fas fa-check-circle text-success h4 m-0"></i></button>
+                <button type="button" class="btn p-0" style="content: 'Reject';"><i class="fa fa-times-circle text-danger h4 m-0" aria-hidden="true"></i></button>
+            </div>
+        </li>
+        {% endfor %}
+        {% else %}
+        <li class="list-group-item align-items-center d-flex" style="border: 0;">
+            <div style='display: inline-block;' class='me-auto'>
+                <p class='m-0'><i>No Requests</i></p>
+            </div>
+        </li>
+        {% endif %}
+        <li><hr class="dropdown-divider"></li>
+
+
+        <li class="list-group-item align-items-center d-flex" style="border: 0;">
+            <div style='display: inline-block;' class='me-auto'>
+                <p class='m-0'><i><strong>Group Requests</strong></i></p>
+            </div>
+        </li>
+        {% if group_invites %}
+            {% for activity in group_invites %}
+            <li class="list-group-item align-items-center d-flex accept_reject_group_invite_target" style="border: 0;"
+                id='{{ activity.id }}_{{ activity.group_id__id }}'>
+                <div style='display: inline-block;' class='me-auto'>
+                    <p class='m-0'>{{ activity.group_id__group_name }}</p>
+                </div>
+                <div style='display: inline-block;'>
+                    <button type="button" class="btn p-0" style="content: 'Accept';"><i class="fas fa-check-circle text-success h4 m-0"></i></button>
+                    <button type="button" class="btn p-0" style="content: 'Reject';"><i class="fa fa-times-circle text-danger h4 m-0" aria-hidden="true"></i></button>
+                </div>
+            </li>
+            {% endfor %}
+        {% else %}
+            <li class="list-group-item align-items-center d-flex" style="border: 0;">
+                <div style='display: inline-block;' class='me-auto'>
+                    <p class='m-0'><i>No Requests</i></p>
+                </div>
+            </li>
+        {% endif %}
+    </ul>
+  </div>
+
+{% endblock notification %}
+
+
+
 {% block body %}
 <div class="container my-3">
     <div class="row">
@@ -134,67 +208,68 @@
                                             
                                         </li> -->
                                         {% if unsettled_expenses %}
-                                        {% for expense in unsettled_expenses %}
-                                        <li data-aos="fade-up" data-aos-duration="1000" class="list-group-item d-flex align-items-center"
-                                            id='{{ expense.bill_id_id }}'>
-                                            <div class="col-xs-8 pull-left me-auto">
-                                                <p><strong>{{ expense.bill_id__bill_name }} - {{ expense.group_id__group_name }}</strong></p>
-                                            </div>
-                                            <div class="col-xs-4 pull-right">
-                                                <button class="btn primary-btn text-light" type="button" data-bs-toggle="collapse"
-                                                    data-bs-target="#billDetail_{{ expense.bill_id_id }}"
-                                                    aria-expanded="false" aria-controls="collapseExample">
-                                                    Bill Details<i class="fa-solid fa-arrow-down-short-wide"></i>
-                                                </button>
-                                            </div>
-                                        </li>
-                                        <div class="collapse" id="billDetail_{{ expense.bill_id_id }}">
-                                            <div class="card card-body">
-                                                <table class="table table-hover table-striped">
-                                                    <tbody>
-                                                        <tr>
-                                                            <th class="table-dark" scope="col">Expense Name</th>
-                                                            <th class="table-dark" scope="col">{{ expense.bill_id__bill_name }}</th>
-                                                        </tr>
-                                                        <tr>
-                                                            <td scope="col">Date & Time</td>
-                                                            <td scope="col">{{ expense.bill_id__date }}</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td scope="col">Split Type</td>
-                                                            <td scope="col">{{ expense.bill_id__split_type }}</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td scope="col">Amount Paid by You</td>
-                                                            <td scope="col">&#8377; {{ expense.paid }}</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td scope="col">Amount on your Part</td>
-                                                            <td scope="col">&#8377; {{ expense.must_pay }}</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td scope="col">Debt amount</td>
-                                                            <td scope="col">&#8377; {{ expense.debt }}</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td scope="col">Lent amount</td>
-                                                            <td scope="col">&#8377; {{ expense.lent }}</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="fw-bold" scope="col">Total Amount</td>
-                                                            <td class="fw-bold" scope="col">&#8377; {{ expense.bill_id__amount }}</td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
-                                        {% endfor %}
+                                            {% for expense in unsettled_expenses %}
+                                                    
+                                                    <li data-aos="fade-up" data-aos-duration="1000" class="list-group-item d-flex align-items-center"
+                                                        id='{{ expense.bill_id_id }}'>
+                                                        <div class="col-xs-8 pull-left me-auto">
+                                                            <p><strong>{{ expense.bill_id__bill_name }} - {{ expense.group_id__group_name }}</strong></p>
+                                                        </div>
+                                                        <div class="col-xs-4 pull-right">
+                                                            <button class="btn primary-btn text-light" type="button" data-bs-toggle="collapse"
+                                                                data-bs-target="#billDetail_{{ expense.bill_id_id }}"
+                                                                aria-expanded="false" aria-controls="collapseExample">
+                                                                Bill Details<i class="fa-solid fa-arrow-down-short-wide"></i>
+                                                            </button>
+                                                        </div>
+                                                    </li>
+                                                    <div class="collapse" id="billDetail_{{ expense.bill_id_id }}">
+                                                        <div class="card card-body">
+                                                            <table class="table table-hover table-striped">
+                                                                <tbody>
+                                                                    <tr>
+                                                                        <th class="table-dark" scope="col">Expense Name</th>
+                                                                        <th class="table-dark" scope="col">{{ expense.bill_id__bill_name }}</th>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td scope="col">Date & Time</td>
+                                                                        <td scope="col">{{ expense.bill_id__date }}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td scope="col">Split Type</td>
+                                                                        <td scope="col">{{ expense.bill_id__split_type }}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td scope="col">Amount Paid by You</td>
+                                                                        <td scope="col">&#8377; {{ expense.paid }}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td scope="col">Amount on your Part</td>
+                                                                        <td scope="col">&#8377; {{ expense.must_pay }}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td scope="col">Debt amount</td>
+                                                                        <td scope="col">&#8377; {{ expense.debt }}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td scope="col">Lent amount</td>
+                                                                        <td scope="col">&#8377; {{ expense.lent }}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td class="fw-bold" scope="col">Total Amount</td>
+                                                                        <td class="fw-bold" scope="col">&#8377; {{ expense.bill_id__amount }}</td>
+                                                                    </tr>
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                            {% endfor %}
                                         {% else %}
-                                        <li class="list-group-item d-flex align-items-center">
-                                            <div class="col-xs-8 pull-left me-auto">
-                                                <p><strong>Your all settled up.</strong></p>
-                                            </div>
-                                        </li>
+                                            <li class="list-group-item d-flex align-items-center">
+                                                <div class="col-xs-8 pull-left me-auto">
+                                                    <p><strong>Your all settled up.</strong></p>
+                                                </div>
+                                            </li>
                                         {% endif %}
                                     </ul>
                                 </div>
@@ -228,10 +303,8 @@
                                                 <p><strong>{{ activity.sender_id__username }}</strong></p>
                                             </div>
                                             <div class="col-xs-4 pull-right">
-                                                <button type="button" class="btn btn-success">Accept<i
-                                                        class="fa-solid fa-check"></i></button>
-                                                <button type="button" class="btn btn-danger">Reject<i
-                                                        class="fa-solid fa-xmark"></i></button>
+                                                <button type="button" class="btn" style="content: 'Accept';"><i class="fas fa-check-circle text-success h3 m-0"></i></button>
+                                                <button type="button" class="btn" style="content: 'Reject';"><i class="fa fa-times-circle text-danger h3 m-0" aria-hidden="true"></i></button>
                                             </div>
                                         </li>
                                         {% endfor %}
@@ -262,10 +335,8 @@
                                                 <p>{{ activity.group_id__group_name }}</p>
                                             </div>
                                             <div class="col-xs-4 pull-right">
-                                                <button type="button" class="btn btn-success">Accept<i
-                                                        class="fa-solid fa-check"></i></button>
-                                                <button type="button" class="btn btn-danger">Reject<i
-                                                        class="fa-solid fa-xmark"></i></button>
+                                                <button type="button" class="btn" style="content: 'Accept';"><i class="fas fa-check-circle text-success h3 m-0"></i></button>
+                                                <button type="button" class="btn" style="content: 'Reject';"><i class="fa fa-times-circle text-danger h3 m-0" aria-hidden="true"></i></button>
                                             </div>
                                         </li>
                                         {% endfor %}
@@ -300,15 +371,14 @@
                                                 <p><strong>{{ activity.group_id__group_name }} - {{ activity.bill_id__bill_name }}</strong></p>
                                             </div>
                                             <div class="col-xs-4 pull-right">
-                                                <button class="btn btn-primary" type="button" data-bs-toggle="collapse"
+                                                
+                                                <button type="button" class="btn" style="content: 'Accept';"><i class="fas fa-check-circle text-success h3 m-0"></i></button>
+                                                <button type="button" class="btn" style="content: 'Reject';"><i class="fa fa-times-circle text-danger h3 m-0" aria-hidden="true"></i></button>
+                                                <button class="btn primary-btn text-light" type="button" data-bs-toggle="collapse"
                                                     data-bs-target="#billDetail_{{ activity.id }}_{{ activity.group_id__id }}_{{ activity.bill_id__id }}"
                                                     aria-expanded="false" aria-controls="collapseExample">
                                                     Bill details<i class="fa-solid fa-arrow-down-short-wide"></i>
                                                 </button>
-                                                <button type="button" class="btn btn-success">Accept<i
-                                                        class="fa-solid fa-check"></i></button>
-                                                <button type="button" class="btn btn-danger">Reject<i
-                                                        class="fa-solid fa-xmark"></i></button>
                                             </div>
                                         </li>
                                         <div class="collapse"
@@ -384,15 +454,14 @@
                                                 <p><strong>{{ activity.sender_id__username }} - {{ activity.bill_id__bill_name }}</strong></p>
                                             </div>
                                             <div class="col-xs-4 pull-right">
+                                               
+                                                <button type="button" class="btn" style="content: 'Accept';"><i class="fas fa-check-circle text-success h3 m-0"></i></button>
+                                                <button type="button" class="btn" style="content: 'Reject';"><i class="fa fa-times-circle text-danger h3 m-0" aria-hidden="true"></i></button>
                                                 <button class="btn primary-btn text-light" type="button" data-bs-toggle="collapse"
-                                                    data-bs-target="#billDetail_{{ activity.id }}_{{ activity.group_id__id }}_{{ activity.bill_id__id }}"
-                                                    aria-expanded="false" aria-controls="collapseExample">
-                                                    Bill details<i class="fa-solid fa-arrow-down-short-wide"></i>
-                                                </button>
-                                                <button type="button" class="btn btn-success">Accept<i
-                                                        class="fa-solid fa-check"></i></button>
-                                                <button type="button" class="btn btn-danger">Reject<i
-                                                        class="fa-solid fa-xmark"></i></button>
+                                                data-bs-target="#billDetail_{{ activity.id }}_{{ activity.group_id__id }}_{{ activity.bill_id__id }}"
+                                                aria-expanded="false" aria-controls="collapseExample">
+                                                Bill details<i class="fa-solid fa-arrow-down-short-wide"></i>
+                                            </button>
                                             </div>
                                         </li>
                                         <div class="collapse"

@@ -67,6 +67,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
+            
         },
     },
 ]
@@ -150,6 +151,6 @@ MESSAGE_TAGS = {
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 EMAIL_USE_TLS = True  
 EMAIL_HOST = 'smtp.gmail.com'  
-EMAIL_HOST_USER = 'desaiparth971@gmail.com'  
-EMAIL_HOST_PASSWORD = 'Priya@5997'  
+EMAIL_HOST_USER = 'etracker816@gmail.com'  
+EMAIL_HOST_PASSWORD = 'Expense@2022'  
 EMAIL_PORT = 587  

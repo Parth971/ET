@@ -46,6 +46,7 @@
         </ul>
 
         <ul class="d-flex nav-bar-btns">
+          {% block notification %}{% endblock notification %}
 
           {% if request.user.is_authenticated %}
           <!-- <li class="nav-item user_name_tag">
@@ -80,7 +81,7 @@
 
           {% endif %}
 
-
+          
 
         </ul>
       </div>

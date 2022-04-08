@@ -113,7 +113,7 @@ def accept_reject_friend_request(request):
                 my_row.save()
 
                 data = {
-                    'message' : 'Friend request accepted.',
+                    'message' : 'Accepted.',
                     'status': 'success'
                 }
             else:
@@ -125,7 +125,7 @@ def accept_reject_friend_request(request):
                 sender_row.delete()
 
                 data = {
-                    'message' : 'Friend request rejected',
+                    'message' : 'Rejected',
                     'status': 'success'
                 }
 
@@ -183,6 +183,11 @@ def accept_reject_group_request(request):
             'message' : 'You are already in group.',
             'status': 'failed'
         }
+    elif Activity.objects.filter(id=activity_id)[0].status != 'PENDING':
+        data = {
+            'message' : 'Action already taken.',
+            'status': 'failed'
+        }
     else:
         try:
             if status == 'Accept':
@@ -194,7 +199,7 @@ def accept_reject_group_request(request):
                 current_activity.save()
 
                 data = {
-                    'message' : 'Group request accepted.',
+                    'message' : 'Accepted.',
                     'status': 'success'
                 }
             else:
@@ -203,7 +208,7 @@ def accept_reject_group_request(request):
                 current_activity.save()
 
                 data = {
-                    'message' : 'Group request rejected',
+                    'message' : 'Rejected',
                     'status': 'success'
                 }
 
@@ -352,13 +357,13 @@ def accept_reject_group_expense_request(request):
     status = request.POST.get('status')
 
     # print(activity_id, group_id, bill_id)
-
+    
     if Bill.objects.filter(id=bill_id, status='REJECTED').exists():
         current_activity = Activity.objects.get(id=activity_id)
         current_activity.status = 'REJECTED'
         current_activity.save()
         data = {
-            'message' : 'Expense already rejected',
+            'message' : 'Expense already rejected by other members',
             'status': 'failed'
         }
     else:
@@ -506,7 +511,7 @@ def get_friend(request):
 
 def get_group(request):
     group_id = int(request.POST.get('group_id'))
-    print(group_id)
+    # print(group_id)
 
 
     current_group = Group.objects.get(id=group_id)
@@ -823,6 +828,8 @@ def dashboard(request):
     # for dashboard 
     unsettled_expenses = Settlement.objects.select_related('bill_id', 'group_id').filter(user_id_id=request.user.id, bill_id__status='UNSETTLED').values('user_id_id', 'user_id__username', 'bill_id_id', 'paid', 'debt', 'must_pay', 'bill_id__bill_name', 'bill_id__amount', 'bill_id__split_type', 'bill_id__date', 'bill_id__status', 'group_id__group_name', 'group_id')
 
+    print(unsettled_expenses)
+
     def lent_amount(paid, must_pay, debt):
         if debt != 0:
             return 0
@@ -834,6 +841,8 @@ def dashboard(request):
             grp_id = unsettled_expenses[i]['group_id']
             f = Friend.objects.select_related('user_id').get(~Q(user_id_id=request.user.id), group_id_id=grp_id)
             unsettled_expenses[i]['group_id__group_name'] = f.user_id.username
+
+    unsettled_expenses = [i for i in unsettled_expenses if i['lent'] != 0 or i['debt'] != 0]
 
     all_expenses_list = []  
     debts_list = []

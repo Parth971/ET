@@ -213,3 +213,7 @@
     max-height: 400px;
     overflow-y: auto;
 }
+
+#notification .dropdown-menu {
+    min-width: 18rem;
+}

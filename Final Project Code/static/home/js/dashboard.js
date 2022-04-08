@@ -139,6 +139,10 @@ $(document).ready(function () {
 
     });
 
+    $('#notification .dropdown-menu').click(function(e){
+        e.stopPropagation();
+    });
+
     function capitalizeFirstLetter(string) {
         return string.charAt(0).toUpperCase() + string.slice(1);
     }
@@ -201,7 +205,7 @@ $(document).ready(function () {
                                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
                                     data-bs-target="#collapse${i}" aria-expanded="true"
                                     aria-controls="collapse${i}">
-                                    ${settlement['bill_id__bill_name']} (${settlement['bill_id__status']})
+                                    ${settlement['bill_id__bill_name']} (${get_my_status(settlement['debt'], get_lent_amount(settlement['paid'], settlement['debt'], settlement['must_pay']), settlement['bill_id__status'])})
                                 </button>
                             </h2>
                             <div id="collapse${i}" class="accordion-collapse collapse"
@@ -223,7 +227,7 @@ $(document).ready(function () {
                                             </tr>
                                             <tr>
                                                 <td scope="col">Current Status</td>
-                                                <td class="text-success" scope="col">${settlement['bill_id__status']}</td>
+                                                <td class="text-success" scope="col">${get_my_status(settlement['debt'], get_lent_amount(settlement['paid'], settlement['debt'], settlement['must_pay']), settlement['bill_id__status'])}</td>
                                             </tr>
                                             <tr>
                                                 <td scope="col">Amount Paid by You</td>
@@ -410,6 +414,19 @@ $(document).ready(function () {
 
     }
 
+    function get_my_status(debt, lent, current_status) {
+        if(current_status == 'PENDING' || current_status == 'REJECTED') {
+            return current_status
+        }
+        
+        if(lent == 0 && debt == 0) {
+            return 'SETTLED'
+        }
+        else {
+            return 'UNSETTLED'
+        }
+    }
+
     // group clicked 
     $('.group_name_list').click(function () {
         $('.data_box_body').empty();
@@ -480,7 +497,7 @@ $(document).ready(function () {
                                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
                                     data-bs-target="#collapse${i}" aria-expanded="true"
                                     aria-controls="collapse${i}">
-                                    ${capitalizeFirstLetter(settlement['bill_id__bill_name'])} (${settlement['bill_id__status']})
+                                    ${capitalizeFirstLetter(settlement['bill_id__bill_name'])} (${get_my_status(settlement['debt'], get_lent_amount(settlement['paid'], settlement['debt'], settlement['must_pay']), settlement['bill_id__status'])})
                                 </button>
                             </h2>
                             <div id="collapse${i}" class="accordion-collapse collapse"
@@ -502,7 +519,7 @@ $(document).ready(function () {
                                             </tr>
                                             <tr>
                                                 <td scope="col">Current Status</td>
-                                                <td class="text-success" scope="col">${settlement['bill_id__status']}</td>
+                                                <td class="text-success" scope="col">${get_my_status(settlement['debt'], get_lent_amount(settlement['paid'], settlement['debt'], settlement['must_pay']), settlement['bill_id__status'])}</td>
                                             </tr>
                                             <tr>
                                                 <td scope="col">Amount Paid by You</td>
@@ -637,47 +654,52 @@ $(document).ready(function () {
         let cuurent_button_parent = $(this).parent()
         let act_send_id = $(this).parent().parent().attr('id');
 
-        let status = $(this).text();
+        let status = $(this).css('content').slice(1,-1);
+        console.log(status);
+        console.log(this);
         let activity_id = parseInt(act_send_id.split('_')[0]);
         let sender_id = parseInt(act_send_id.split('_')[1]);
 
 
-
-        $.ajax({
-            url: url,
-            data: {
-                csrfmiddlewaretoken: crf_token,
-                state: "inactive",
-                'request_motive': 'accept_reject_friend_request',
-                'status': status,
-                'activity_id': activity_id,
-                'sender_id': sender_id,
-            },
-            type: 'post',
-            success: function (result) {
-                console.log(result);
-
-                if (result.status == 'success') {
-                    cuurent_button_parent.empty();
-                    let s = `<button type="button" class="btn btn-success" disabled>` + result.message + `<i class="fa-solid fa-check"></i></button>`;
-                    cuurent_button_parent.append(s);
+        if (status == 'Accept' || status == 'Reject') {
+            console.log(status);
+            $.ajax({
+                url: url,
+                data: {
+                    csrfmiddlewaretoken: crf_token,
+                    state: "inactive",
+                    'request_motive': 'accept_reject_friend_request',
+                    'status': status,
+                    'activity_id': activity_id,
+                    'sender_id': sender_id,
+                },
+                type: 'post',
+                success: function (result) {
+                    console.log(result);
+    
+                    if (result.status == 'success') {
+                        cuurent_button_parent.empty();
+                        let s = `<button type="button" class="btn btn-success" disabled>` + result.message + `<i class=" mx-2 fa-solid fa-check"></i></button>`;
+                        cuurent_button_parent.append(s);
+                    }
+                    else if (result.status == 'failed') {
+                        cuurent_button_parent.empty();
+                        let s = `<button type="button" class="btn btn-success" disabled>` + result.message + `<i class="mx-2 fa-solid fa-check"></i></button>`;
+                        cuurent_button_parent.append(s);
+                    }
+                    else {
+                        $('#friend_request_error div p strong').text(result.message);
+                        $('#friend_request_error').css('display', 'block');
+                        $('#friend_request_error div p').css('color', 'red');
+                    }
+    
+                },
+                failure: function () {
+                    console.log('failed');
                 }
-                else if (result.status == 'failed') {
-                    cuurent_button_parent.empty();
-                    let s = `<button type="button" class="btn btn-success" disabled>` + result.message + `<i class="fa-solid fa-check"></i></button>`;
-                    cuurent_button_parent.append(s);
-                }
-                else {
-                    $('#friend_request_error div p strong').text(result.message);
-                    $('#friend_request_error').css('display', 'block');
-                    $('#friend_request_error div p').css('color', 'red');
-                }
-
-            },
-            failure: function () {
-                console.log('failed');
-            }
-        });
+            });
+        }
+        
 
     });
 
@@ -686,46 +708,54 @@ $(document).ready(function () {
         let cuurent_button_parent = $(this).parent()
         let act_group_id = $(this).parent().parent().attr('id');
 
-        let status = $(this).text();
+        let status = $(this).css('content').slice(1,-1);
+        console.log(status);
+        console.log(this);
         let activity_id = parseInt(act_group_id.split('_')[0]);
         let group_id = parseInt(act_group_id.split('_')[1]);
 
+        if (status == 'Accept' || status == 'Reject') {
+            console.log(status);
 
-        $.ajax({
-            url: url,
-            data: {
-                csrfmiddlewaretoken: crf_token,
-                state: "inactive",
-                'request_motive': 'accept_reject_group_request',
-                'status': status,
-                'activity_id': activity_id,
-                'group_id': group_id,
-            },
-            type: 'post',
-            success: function (result) {
-                console.log(result);
+            $.ajax({
+                url: url,
+                data: {
+                    csrfmiddlewaretoken: crf_token,
+                    state: "inactive",
+                    'request_motive': 'accept_reject_group_request',
+                    'status': status,
+                    'activity_id': activity_id,
+                    'group_id': group_id,
+                },
+                type: 'post',
+                success: function (result) {
+                    console.log(result);
+    
+                    if (result.status == 'success') {
+                        cuurent_button_parent.empty();
+                        let s = `<button type="button" class="btn btn-success" disabled>` + result.message + `<i class="mx-2 fa-solid fa-check"></i></button>`;
+                        cuurent_button_parent.append(s);
+                    }
+                    else if (result.status == 'failed') {
+                        cuurent_button_parent.empty();
+                        let s = `<button type="button" class="btn btn-success" disabled>` + result.message + `<i class="mx-2 fa-solid fa-check"></i></button>`;
+                        cuurent_button_parent.append(s);
+                    }
+                    else {
+                        $('#group_request_error div p strong').text(result.message);
+                        $('#group_request_error').css('display', 'block');
+                        $('#group_request_error div p').css('color', 'red');
+                    }
+    
+                },
+                failure: function () {
+                    console.log('failed');
+                }
+            });
 
-                if (result.status == 'success') {
-                    cuurent_button_parent.empty();
-                    let s = `<button type="button" class="btn btn-success" disabled>` + result.message + `<i class="fa-solid fa-check"></i></button>`;
-                    cuurent_button_parent.append(s);
-                }
-                else if (result.status == 'failed') {
-                    cuurent_button_parent.empty();
-                    let s = `<button type="button" class="btn btn-success" disabled>` + result.message + `<i class="fa-solid fa-check"></i></button>`;
-                    cuurent_button_parent.append(s);
-                }
-                else {
-                    $('#group_request_error div p strong').text(result.message);
-                    $('#group_request_error').css('display', 'block');
-                    $('#group_request_error div p').css('color', 'red');
-                }
+        }
 
-            },
-            failure: function () {
-                console.log('failed');
-            }
-        });
+        
 
     });
 
@@ -1611,8 +1641,7 @@ $(document).ready(function () {
 
 
     $('.accept_reject_group_expense_target button').click(function () {
-        let btn_text = $(this).text();
-
+        let btn_text = $(this).css('content').slice(1,-1);
         let cuurent_button_parent = $(this).parent();
 
         let id = $(this).parent().parent().attr('id');
@@ -1623,7 +1652,11 @@ $(document).ready(function () {
         let bill_id = ides[2];
 
         console.log(activity_id, group_id, bill_id);
+        console.log($(this));
 
+        console.log(btn_text);
+        console.log(btn_text === "Accept");
+        
         if (btn_text == 'Accept' || btn_text == 'Reject') {
             console.log(btn_text);
 
@@ -1644,13 +1677,13 @@ $(document).ready(function () {
 
                     if (result.status == 'success') {
                         cuurent_button_parent.empty();
-                        let s = `<button type="button" class="btn btn-success" disabled>` + result.message + `<i class="fa-solid fa-check"></i></button>`;
+                        let s = `<button type="button" class="btn btn-success" disabled>` + result.message + `<i class="mx-2 fa-solid fa-check"></i></button>`;
                         cuurent_button_parent.append(s);
                         $('#billDetail_' + id).remove();
                     }
                     else if (result.status == 'failed') {
                         cuurent_button_parent.empty();
-                        let s = `<button type="button" class="btn btn-success" disabled>` + result.message + `<i class="fa-solid fa-check"></i></button>`;
+                        let s = `<button type="button" class="btn btn-success" disabled>` + result.message + `<i class="mx-2 fa-solid fa-check"></i></button>`;
                         cuurent_button_parent.append(s);
                         $('#billDetail_' + id).remove();
                     }
@@ -1675,7 +1708,7 @@ $(document).ready(function () {
 
 
     $('.accept_reject_friend_expense_target button').click(function () {
-        let btn_text = $(this).text();
+        let btn_text = $(this).css('content').slice(1,-1);
 
         let cuurent_button_parent = $(this).parent();
 
@@ -1685,6 +1718,9 @@ $(document).ready(function () {
         let activity_id = ides[0];
         let group_id = ides[1];
         let bill_id = ides[2];
+
+        console.log(btn_text);
+        console.log(this);
 
         console.log(activity_id, group_id, bill_id);
 
@@ -1708,13 +1744,13 @@ $(document).ready(function () {
 
                     if (result.status == 'success') {
                         cuurent_button_parent.empty();
-                        let s = `<button type="button" class="btn btn-success" disabled>` + result.message + `<i class="fa-solid fa-check"></i></button>`;
+                        let s = `<button type="button" class="btn btn-success" disabled>` + result.message + `<i class="mx-2 fa-solid fa-check"></i></button>`;
                         cuurent_button_parent.append(s);
                         $('#billDetail_' + id).remove();
                     }
                     else if (result.status == 'failed') {
                         cuurent_button_parent.empty();
-                        let s = `<button type="button" class="btn btn-success" disabled>` + result.message + `<i class="fa-solid fa-check"></i></button>`;
+                        let s = `<button type="button" class="btn btn-success" disabled>` + result.message + `<i class="mx-2 fa-solid fa-check"></i></button>`;
                         cuurent_button_parent.append(s);
                         $('#billDetail_' + id).remove();
                     }
