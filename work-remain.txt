@@ -1,0 +1,2 @@
+- Add Pagination to User in Add Friend Tab
+- If user has not verfied then it should not be seen in Add friend.
