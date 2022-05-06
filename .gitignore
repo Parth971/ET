@@ -2,3 +2,4 @@ et-virtual/
 __pycache__/
 .vscode/
 my-project-env/
+.env
