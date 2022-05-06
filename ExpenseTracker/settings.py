@@ -28,7 +28,7 @@ SECRET_KEY = 'django-insecure-9lgj=og=jqu4z=)$g8^wg^-&24)v9dj-9e_uwemre*%yqi^*lb
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['0.0.0.0']
+ALLOWED_HOSTS = ['0.0.0.0', '127.0.0.1']
 
 
 # Application definition
@@ -154,3 +154,7 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_HOST_USER = 'etracker816@gmail.com'  
 EMAIL_HOST_PASSWORD = 'Expense@2022'  
 EMAIL_PORT = 587  
+
+
+import django_heroku
+django_heroku.settings(locals())
