@@ -158,3 +158,7 @@ EMAIL_PORT = 587
 
 import django_heroku
 django_heroku.settings(locals())
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://expense-tracker-heroku-project.herokuapp.com'
+]
