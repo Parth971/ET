@@ -18,3 +18,5 @@ and then it helps you to settle up with each other.
 - Up to date track record of all debts.
 - Transparent and error free split process.
 - Time saving from complex calculations.
+
+![alt text](https://github.com/Parth971/Expense-Tracker-Django-Full-stack-Web-Appliction/blob/master/readme_assets/dashboard.png)
