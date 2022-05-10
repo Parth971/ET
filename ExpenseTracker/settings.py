@@ -151,8 +151,8 @@ MESSAGE_TAGS = {
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 EMAIL_USE_TLS = True  
 EMAIL_HOST = 'smtp.gmail.com'  
-EMAIL_HOST_USER = 'etracker816@gmail.com'  
-EMAIL_HOST_PASSWORD = 'Expense@2022'  
+EMAIL_HOST_USER = 'YOUR_EMAIL_HERE'  
+EMAIL_HOST_PASSWORD = 'YOUR_PASSWORD_HERE'  
 EMAIL_PORT = 587  
 
 
